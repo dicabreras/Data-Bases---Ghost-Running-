@@ -1,0 +1,57 @@
+group:GhostRunning
+
+Usuario = {
+  Usu_Correo:string, Usu_Username:string, Usu_Contrasena:string, Usu_Nombres:string, Usu_Apellidos:string, Usu_Edad:number, Usu_FotoPerfil:string, Usu_Descripcion:string, Usu_FechaRegistro:string, Usu_Genero:string
+}
+
+Estado_Fisico = {
+  Est_Fis_ID:number, Est_Fis_Peso:number, Est_Fis_Altura:number, Usu_Correo:string
+}
+
+Objetivos_Semanal = {
+  Obj_Ent_Sem_ID:number, Obj_Ent_Sem_NumeroEntrenamientos:number, Obj_Ent_Sem_Distancia:number, Usu_Correo:string
+}
+
+Ruta = {
+  Rut_ID:number, Rut_Distancia:number
+}
+
+Coordenada = {
+  Coor_ID:number, Coor_Latitud:number, Coor_Longitud:number, Coor_Altitud:number, Rut_ID:number
+}
+
+Entrenamiento = {
+  Ent_ID:number, Ent_Fecha:string, Ent_Hora_Inicio:string, Ent_Duracion:string, Ent_Distancia:number, Ent_Ritmo:number, Ent_Max_Speed:number, Ent_Avg_Speed:number, Ent_Calorias:number, Ent_CambioNivel:number, Usu_Correo:string, Rut_ID:number
+}
+
+Km = {
+  Km_ID:number, Km_Tiempo:string, Km_Distancia:number, Ent_ID:number
+}
+
+Reto = {
+  Ret_Men_ID:number, Ret_Men_Distancia:number, Ret_Men_Fecha_Inicio:string, Ret_Men_Fecha_Finalizacion:string
+}
+
+Inscripcion_Reto = {
+  Ret_ID:number, Usu_Correo:string
+}
+
+Publicacion = {
+  Pub_ID:number, Pub_Likes:number, Pub_ImagenRuta:string, Pub_Privacidad:number, Usu_Correo:string, Rut_ID:number
+}
+
+Cycling = {
+  Cyc_LongitudPedaleo:number, Usu_Correo:string, Ent_ID:number, Tipo:string
+}
+
+Running = {
+  Run_LongitudPaso:number, Usu_Correo:string, Ent_ID:number, Tipo:string
+}
+
+Entrenamientos_Usuario = {
+  Usu_Correo:string, Ent_ID:number
+}
+
+Seguidos = {
+  Usu_Correo1:string, Usu_Correo2:string
+}

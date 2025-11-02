@@ -1,0 +1,4 @@
+-- Script de consultas en álgebra relacional (AR)
+
+-- 1. Usuarios que han participado en al menos un reto 
+π Usu_Correo (Usuario⨝Inscripcion_Reto)
