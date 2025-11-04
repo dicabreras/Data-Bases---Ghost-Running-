@@ -1,5 +1,4 @@
--- Seed script: at least 20 records per table, using AUTO_INCREMENT with LAST_INSERT_ID variables.
--- Run on DB Ghost_Running. Assumes your DDL (tables + FKs) is already created as provided.
+
 
 START TRANSACTION;
 

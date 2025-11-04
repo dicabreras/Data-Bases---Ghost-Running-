@@ -1,7 +1,50 @@
 USE Ghost_Running;
 
 
--- VISTA: Resumen general de usuarios y su actividad
+-- Vista 1: Rutas más populares
+CREATE OR REPLACE VIEW vw_top_routes AS
+SELECT 
+    Route.rou_Id AS route_identifier,
+    ROUND(Route.rou_Distance, 2) AS total_distance_kilometers,
+    COUNT(Training.tra_Counter) AS total_trainings_completed
+FROM Route
+INNER JOIN Training 
+    ON Route.rou_Id = Training.rou_Id
+GROUP BY Route.rou_Id, Route.rou_Distance
+ORDER BY total_trainings_completed DESC
+LIMIT 10;
+
+-- Vista 2: Retos mensuales activos 
+
+CREATE OR REPLACE VIEW vw_active_challenges AS
+SELECT 
+    MonthlyChallenge.mon_id AS challenge_identifier,
+    MonthlyChallenge.mon_Distance AS distance_goal_kilometers,
+    MonthlyChallenge.mon_StartDate AS start_date,
+    MonthlyChallenge.mon_EndDate AS end_date,
+    DATEDIFF(MonthlyChallenge.mon_EndDate, CURDATE()) AS days_remaining
+FROM MonthlyChallenge
+WHERE CURDATE() BETWEEN MonthlyChallenge.mon_StartDate AND MonthlyChallenge.mon_EndDate
+ORDER BY MonthlyChallenge.mon_StartDate DESC;
+
+
+-- Vista 3: Estadísticas globales de entrenamiento en la plataforma
+
+CREATE OR REPLACE VIEW vw_global_stats AS
+SELECT 
+    COUNT(DISTINCT Training.user_Email) AS total_registered_users_with_training,
+    COUNT(Training.tra_Counter) AS total_trainings_recorded,
+    ROUND(AVG(Training.tra_AvgSpeed), 2) AS average_speed_kmh,
+    ROUND(AVG(Training.tra_Rithm), 2) AS average_rithm_minutes_per_km,
+    ROUND(SUM(Route.rou_Distance), 2) AS total_distance_registered_km
+FROM Training
+INNER JOIN Route 
+    ON Training.rou_Id = Route.rou_Id;
+
+USE Ghost_Running;
+
+
+-- VISTA : Resumen general de usuarios y su actividad
 
 CREATE OR REPLACE VIEW vw_admin_user_summary AS
 SELECT 
@@ -18,7 +61,6 @@ LEFT JOIN Publication AS p ON u.User_Email = p.user_Email
 LEFT JOIN Followed    AS f ON u.User_Email = f.user_EmailFollowed
 GROUP BY u.User_Email
 ORDER BY total_trainings DESC;
-
 
 
 -- VISTA: Rendimiento promedio por usuario
@@ -71,6 +113,7 @@ LEFT JOIN User_has_MonthlyChallenge AS u
 GROUP BY m.mon_id
 ORDER BY total_participants DESC;
 
+
 -- VISTA: Promedio del estado físico de los usuarios
 
 CREATE OR REPLACE VIEW vw_admin_user_physical_state AS
@@ -82,7 +125,56 @@ FROM PhysicalState AS p
 GROUP BY p.user_Email
 ORDER BY average_weight_kg DESC;
 
--- VISTA: Entrenamientos personales con métricas detalladas
+
+-- VISTA: Usuarios más activos por tipo de entrenamiento y edad
+
+CREATE OR REPLACE VIEW vw_admin_activity_by_sport_and_age AS
+SELECT 
+    t.tra_TrainingType                     AS training_type,
+    COUNT(DISTINCT t.user_Email)           AS total_active_users,
+    ROUND(AVG(u.user_Age), 1)              AS average_age_years,
+    MIN(u.user_Age)                        AS youngest_user_age,
+    MAX(u.user_Age)                        AS oldest_user_age
+FROM Training AS t
+INNER JOIN UserGR AS u ON t.user_Email = u.User_Email
+GROUP BY t.tra_TrainingType
+ORDER BY total_active_users DESC;
+
+
+
+-- VISTA : Rutas más transitadas por número de entrenamientos
+
+CREATE OR REPLACE VIEW vw_admin_most_used_routes AS
+SELECT 
+    r.rou_Id                    AS route_identifier,
+    ROUND(r.rou_Distance, 2)    AS route_distance_km,
+    COUNT(t.tra_Counter)        AS total_trainings_on_route,
+    COUNT(DISTINCT t.user_Email) AS distinct_users_on_route
+FROM Route AS r
+INNER JOIN Training AS t ON r.rou_Id = t.rou_Id
+GROUP BY r.rou_Id
+ORDER BY total_trainings_on_route DESC
+LIMIT 10;
+
+
+CREATE OR REPLACE VIEW vw_admin_training_activity_by_month AS
+SELECT 
+    MONTHNAME(t.tra_Datetime)       AS training_month,
+    YEAR(t.tra_Datetime)            AS training_year,
+    COUNT(t.tra_Counter)            AS total_trainings,
+    ROUND(AVG(t.tra_AvgSpeed), 2)   AS average_speed_kmh,
+    ROUND(SUM(r.rou_Distance), 2)   AS total_distance_km
+FROM Training AS t
+INNER JOIN Route AS r ON t.rou_Id = r.rou_Id
+GROUP BY training_year, training_month
+ORDER BY training_year DESC, total_trainings DESC;
+
+
+
+
+-- Usuario
+
+-- VISTA : Entrenamientos personales con métricas detalladas
 
 CREATE OR REPLACE VIEW vw_user_my_trainings AS
 SELECT 
@@ -100,7 +192,8 @@ ORDER BY t.tra_Datetime DESC;
 
 
 
--- VISTA: Progreso semanal según metas planteadas
+
+-- VISTA : Progreso semanal según metas planteadas
 
 CREATE OR REPLACE VIEW vw_user_weekly_goal_progress AS
 SELECT 
@@ -121,7 +214,7 @@ ORDER BY w.wee_StartDate DESC;
 
 
 
--- VISTA: Retos mensuales inscritos por el usuario
+-- VISTA 3: Retos mensuales inscritos por el usuario
 
 CREATE OR REPLACE VIEW vw_user_my_challenges AS
 SELECT 
@@ -157,7 +250,7 @@ LEFT JOIN Comments AS c
       AND p.user_Email   = c.user_Email
       AND p.tra_Counter  = c.tra_Counter
       AND p.rou_Id       = c.rou_Id
-GROUP BY p.user_Email, p.pub_Counter
+GROUP BY p.user_Email, p.pub_Counter, p.pub_Likes, p.pub_Privacity, p.pub_Datetime
 ORDER BY p.pub_Datetime DESC;
 
 
@@ -173,7 +266,7 @@ ORDER BY f.user_EmailFollowed;
 
 
 
--- VISTA : Comparación personal frente al promedio global
+-- VISTA: Comparación personal frente al promedio global
 
 CREATE OR REPLACE VIEW vw_user_progress_comparison AS
 SELECT 
@@ -185,3 +278,9 @@ SELECT
 FROM Training AS t
 GROUP BY t.user_Email
 ORDER BY user_average_speed DESC;
+
+
+
+
+
+
