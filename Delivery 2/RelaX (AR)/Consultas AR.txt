@@ -1,4 +1,270 @@
--- Script de consultas en álgebra relacional (AR)
 
--- 1. Usuarios que han participado en al menos un reto 
-π Usu_Correo (Usuario⨝Inscripcion_Reto)
+
+
+
+-- Vistas que se pueden escribir en AR
+/*
+-- VISTA: Red de seguidores y seguidos del usuario
+π user_EmailFollower, user_EmailFollowed (Followed)
+*/
+/*
+-- Vista: Usuarios más activos por tipo de entrenamiento y edad
+
+-- Unión Training con UserGR para obtener la edad
+TU = Training ⨝ Training.user_Email = UserGR.User_Email UserGR
+
+-- Proyección sólo (tipo de entrenamiento, usuario, edad) para eliminar duplicados por usuario+tipo
+UuniqAge = π tra_TrainingType, User_Email, user_Age ( TU )
+
+-- Agregación por tipo usando la relación duplicada
+Agg = ρ Agg γ tra_TrainingType ;
+      count(User_Email) → total_active_users,
+      avg(user_Age) → average_age_years,
+      min(user_Age) → youngest_user_age,
+      max(user_Age) → oldest_user_age
+      ( UuniqAge )
+
+-- proyección y renombramiento columnas para salida legible
+Resultado_usuarios_activos_por_tipo =
+  π training_type ← tra_TrainingType,
+      total_active_users,
+      average_age_years,
+      youngest_user_age,
+      oldest_user_age ( Agg )
+
+Resultado_usuarios_activos_por_tipo
+
+*/
+
+/*
+-- VISTA: Rutas más transitadas por número de entrenamientos
+
+-- 1) unir Route con Training (join natural sobre rou_Id)
+J2 = Route ⨝ Training
+
+-- 2) contar entrenamientos por ruta
+CE = ρ CE γ rou_Id ;
+     count(tra_Counter) → total_trainings_on_route
+( J2 )
+
+-- 3) obtener pares (ruta, usuario) únicos para luego contar usuarios distintos por ruta
+UsuariosPorRuta = π rou_Id, user_Email ( J2 )
+
+-- 4) contar usuarios distintos por ruta (después de la proyección que quita duplicados)
+CU = ρ CU γ rou_Id ;
+     count(user_Email) → distinct_users_on_route
+( UsuariosPorRuta )
+
+-- 5) proyección de rutas con distancia
+Rts = π rou_Id, rou_Distance ( Route )
+
+-- 6) unir naturalmente las tres relaciones que comparten rou_Id
+--    (natural join usa el atributo común rou_Id sin repetir condiciones)
+Temp = Rts ⨝ CE ⨝ CU
+
+-- 7) proyectar resultado final con nombres legibles
+Resultado =
+  π rou_Id, rou_Distance, total_trainings_on_route, distinct_users_on_route ( Temp )
+
+Resultado
+
+*/
+
+/*
+-- VISTA: Promedio del estado físico de los usuarios
+ γ user_Email; AVG(phy_Height) → average_height_m, AVG(phy_Weight) → average_weight_kg (PhysicalState)
+*/
+
+/*
+-- VISTA: Participación en retos mensuales
+J3 = MonthlyChallenge ⟕ mon_id = mon_Id User_has_MonthlyChallenge
+γ mon_id, mon_Distance, mon_StartDate, mon_EndDate; COUNT(user_Email) → total_participants (J3)
+*/
+
+/*
+-- VISTA: Actividad en publicaciones y participación
+J4 = Publication ⟕ Comments
+γ user_Email; COUNT(pub_Counter) → total_publications, SUM(pub_Likes) → total_likes, COUNT(com_Counter) → total_comments (J4)
+*/
+
+/*
+-- VISTA: Rendimiento promedio por usuario
+
+-- 1) join natural entre Training y Route (une por rou_Id)
+J5 = Training ⨝ Route
+
+-- 2) agregación por usuario (user_Email)
+AggRendimiento = ρ AggRendimiento γ user_Email ;
+    avg(tra_AvgSpeed) → average_speed_kmh,
+    avg(tra_Rithm) → average_rithm_min_per_km,
+    sum(rou_Distance) → total_distance_km,
+    count(tra_Counter) → total_training_sessions
+( J5 )
+
+-- 3) proyectar con nombres legibles
+Resultado_vw_rendimiento_promedio =
+  π user_email ← user_Email,
+    average_speed_kmh,
+    average_rithm_min_per_km,
+    total_distance_km,
+    total_training_sessions
+( AggRendimiento )
+
+Resultado_vw_rendimiento_promedio
+*/
+/*
+-- VISTA: Resumen general de usuarios y su actividad
+
+-- 1) Conteos por usuario (agregaciones sobre las relaciones base)
+AggTrainings = ρAggTrainings γ user_Email ;
+  count(tra_Counter) → total_trainings
+( Training )
+
+AggPublications = ρAggPublications γ user_Email ;
+  count(pub_Counter) → total_publications
+( Publication )
+
+-- followers: contamos cuántos seguidores tiene cada usuario seguido
+AggFollowers = ρAggFollowers γ user_EmailFollowed ;
+  count(user_EmailFollower) → total_followers
+( Followed )
+
+-- 2) Left joins para anexar los agregados a la tabla de usuarios
+U1 = UserGR ⟕ UserGR.User_Email = AggTrainings.user_Email  AggTrainings
+U2 = U1    ⟕ U1.User_Email = AggPublications.user_Email  AggPublications
+U3 = U2    ⟕ U2.User_Email = AggFollowers.user_EmailFollowed  AggFollowers
+
+-- 3) Proyección final con los campos solicitados
+Resultado_vw_admin_user_summary =
+  π User_Email, User_Username, user_Names, user_LastNames, user_RegistrationDate,
+    total_trainings, total_publications, total_followers
+  ( U3 )
+
+Resultado_vw_admin_user_summary
+*/
+
+/*
+-- VISTA: Rutas más transitadas por número de entrenamientos
+J1 = Route ⨝ Route.rou_Id = Training.rou_Id Training
+Agg = γ Route.rou_Id, Route.rou_Distance;
+          count(tra_Counter) → total_trainings_completed
+      (J1)
+π rou_Id → route_identifier,
+  rou_Distance → total_distance_kilometers,
+  total_trainings_completed
+(Agg)
+*/
+
+/*
+-- VISTA: Estadísticas globales de entrenamiento en la plataforma
+J1 = Training ⨝ Training.rou_Id = Route.rou_Id Route
+γ ;
+   count(user_Email) → total_registered_users_with_training,
+   count(tra_Counter) → total_trainings_recorded,
+   avg(tra_AvgSpeed) → average_speed_kmh,
+   avg(tra_Rithm) → average_rithm_minutes_per_km,
+   sum(rou_Distance) → total_distance_registered_km
+(J1)
+*/
+
+/*
+-- VISTA : Entrenamientos personales con métricas detalladas
+
+-- 1) join natural entre Training y Route (une por rou_Id)
+Jt = Training ⨝ Route
+
+-- 2) proyectar los campos solicitados (sin ROUND)
+Resultado_vw_user_my_trainings =
+  π user_email ← user_Email,
+    training_datetime ← tra_Datetime,
+    training_type ← tra_TrainingType,
+    average_speed_kmh ← tra_AvgSpeed,
+    rithm_min_per_km ← tra_Rithm,
+    route_distance_km ← rou_Distance,
+    duration_time ← tra_Duration,
+    calories_burned ← tra_Calories
+  ( Jt )
+
+Resultado_vw_user_my_trainings
+*/
+
+-- Consultas (solamente)
+
+-- 0. Usuarios que han participado en al menos un reto 
+-- π User_Email (UserGR⨝User_has_MonthlyChallenge)
+/*
+-- 1) Top usuarios por número de entrenamientos
+A1 = ρA1 γ user_Email ;
+      count(tra_Counter) → total_trainings
+    ( Training )
+
+Resultado_top_usuarios = π user_Email, total_trainings ( A1 )
+
+Resultado_top_usuarios
+*/
+
+/*
+-- 2) Velocidad promedio por ruta
+Jr = Training ⨝ Route
+
+A2 = ρA2 γ rou_Id ;
+      avg(tra_AvgSpeed) → avg_speed_kmh
+    ( Jr )
+
+Resultado_avg_speed_route = π rou_Id, avg_speed_kmh ( A2 )
+
+Resultado_avg_speed_route
+*/
+
+/*
+-- 3) Usuarios sin entrenamientos
+U_all = π User_Email ( UserGR )
+U_with_training = π user_Email ( Training )
+
+Usuarios_sin_training = U_all - U_with_training
+
+Usuarios_sin_training
+
+*/
+
+/*
+-- 4) Publicaciones con sus likes (agregado)
+A9 = ρA9 γ pub_Counter, user_Email ;
+      sum(pub_Likes) → likes_total
+    ( Publication )
+
+Resultado_publicaciones_likes = π pub_Counter, user_Email, likes_total ( A9 )
+
+Resultado_publicaciones_likes
+*/
+
+/*
+-- 5) Usuarios mutuos (A sigue B y B sigue A)
+F1 = ρF1 π user_EmailFollower, user_EmailFollowed ( Followed )
+F2 = ρF2 π user_EmailFollower, user_EmailFollowed ( Followed )
+
+Mutual = F1 ⨝ F1.user_EmailFollower = F2.user_EmailFollowed ∧ F1.user_EmailFollowed = F2.user_EmailFollower  F2
+
+Resultado_mutuals = π F1.user_EmailFollower, F1.user_EmailFollowed ( Mutual )
+
+Resultado_mutuals
+*/
+
+-- 6) Número promedio de kilómetros por entrenamiento (promedio sobre conteos por entrenamiento)
+Kcount = ρKcount γ tra_Counter ;
+           count(km_Counter) → count_km
+         ( Kilometer )
+
+AvgKmPerTraining = ρAvgK γ ;
+                    avg(count_km) → avg_km_per_training
+                  ( Kcount )
+
+Resultado_avg_km_per_training = π avg_km_per_training ( AvgKmPerTraining )
+
+Resultado_avg_km_per_training
+
+
+
+
+
+

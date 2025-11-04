@@ -1,7 +1,7 @@
 USE Ghost_Running;
 
 
--- Vista 1: Rutas más populares
+-- Vista 1: 10 Rutas más populares
 CREATE OR REPLACE VIEW vw_top_routes AS
 SELECT 
     Route.rou_Id AS route_identifier,

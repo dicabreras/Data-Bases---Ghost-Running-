@@ -1,57 +1,339 @@
 group:GhostRunning
 
-Usuario = {
-  Usu_Correo:string, Usu_Username:string, Usu_Contrasena:string, Usu_Nombres:string, Usu_Apellidos:string, Usu_Edad:number, Usu_FotoPerfil:string, Usu_Descripcion:string, Usu_FechaRegistro:string, Usu_Genero:string
+UserGR = {
+  User_Email:string, User_Username:string, user_Password:string, user_Names:string, user_LastNames:string, user_Age:number, user_ProfilePhoto:string, user_Description:string, user_RegistrationDate:string, user_gender:string
+  'user1@ghost.com', 'user1', '${HASH1}', 'Aiden', 'Walker', 29, NULL, 'Enjoys night runs', '2023-01-12 06:10:00', 'Male'
+  'user2@ghost.com', 'user2', '${HASH2}', 'Olivia', 'Brown', 34, NULL, 'Trail lover', '2022-05-03 07:00:00', 'Female'
+  'user3@ghost.com', 'user3', '${HASH3}', 'Liam', 'Smith', 26, NULL, 'New to running', '2024-03-10 18:20:00', 'Male'
+  'user4@ghost.com', 'user4', '${HASH4}', 'Emma', 'Johnson', 31, NULL, 'Loves long distances', '2021-11-21 05:30:00', 'Female'
+  'user5@ghost.com', 'user5', '${HASH5}', 'Noah', 'Garcia', 37, NULL, 'Prefers cycling', '2020-08-05 09:40:00', 'Male'
+  'user6@ghost.com', 'user6', '${HASH6}', 'Ava', 'Martinez', 24, NULL, 'Weekend sprinter', '2024-06-12 10:10:00', 'Female'
+  'user7@ghost.com', 'user7', '${HASH7}', 'Ethan', 'Robinson', 41, NULL, 'Marathoner', '2019-02-18 06:00:00', 'Male'
+  'user8@ghost.com', 'user8', '${HASH8}', 'Sophia', 'Clark', 28, NULL, 'Urban runner', '2023-09-07 07:15:00', 'Female'
+  'user9@ghost.com', 'user9', '${HASH9}', 'Mason', 'Rodriguez', 33, NULL, 'Runs with a dog', '2022-02-02 06:50:00', 'Male'
+  'user10@ghost.com', 'user10', '${HASH10}', 'Isabella', 'Lewis', 30, NULL, 'Track sessions', '2024-12-01 05:25:00', 'Female'
+  'user11@ghost.com', 'user11', '${HASH11}', 'Lucas', 'Lee', 27, NULL, 'Hills specialist', '2023-03-22 07:45:00', 'Male'
+  'user12@ghost.com', 'user12', '${HASH12}', 'Mia', 'Walker', 32, NULL, 'Recovery runner', '2021-06-15 08:30:00', 'Female'
+  'user13@ghost.com', 'user13', '${HASH13}', 'Henry', 'Hall', 36, NULL, 'Data driven', '2020-12-05 06:05:00', 'Male'
+  'user14@ghost.com', 'user14', '${HASH14}', 'Amelia', 'Allen', 29, NULL, 'Social runner', '2022-10-19 18:00:00', 'Female'
+  'user15@ghost.com', 'user15', '${HASH15}', 'Alexander', 'Young', 38, NULL, 'Cycling commuter', '2019-08-24 07:30:00', 'Male'
+  'user16@ghost.com', 'user16', '${HASH16}', 'Harper', 'Hernandez', 25, NULL, 'Interval lover', '2024-04-11 05:50:00', 'Female'
+  'user17@ghost.com', 'user17', '${HASH17}', 'Logan', 'King', 35, NULL, 'Ultra curious', '2023-07-30 06:20:00', 'Male'
+  'user18@ghost.com', 'user18', '${HASH18}', 'Evelyn', 'Wright', 31, NULL, 'New to app', '2025-01-03 09:00:00', 'Female'
+  'user19@ghost.com', 'user19', '${HASH19}', 'Daniel', 'Lopez', 42, NULL, 'Weekend warrior', '2020-09-18 06:40:00', 'Male'
+  'user20@ghost.com', 'user20', '${HASH20}', 'Charlotte', 'Hill', 26, NULL, 'Loves sunrise runs', '2024-02-02 05:10:00', 'Female'
 }
 
-Estado_Fisico = {
-  Est_Fis_ID:number, Est_Fis_Peso:number, Est_Fis_Altura:number, Usu_Correo:string
+PhysicalState = {
+  user_Email:string, phy_Date:string, phy_Height:number, phy_Weight:number
+  'user1@ghost.com', '2025-09-01 08:00:00', 1.80, 75.2
+  'user2@ghost.com', '2025-08-15 09:15:00', 1.65, 60.5
+  'user3@ghost.com', '2025-07-20 07:20:00', 1.72, 68.1
+  'user4@ghost.com', '2025-06-05 06:45:00', 1.68, 59.0
+  'user5@ghost.com', '2025-05-25 10:30:00', 1.76, 82.4
+  'user6@ghost.com', '2025-04-12 11:00:00', 1.62, 55.0
+  'user7@ghost.com', '2025-03-03 06:10:00', 1.85, 84.0
+  'user8@ghost.com', '2025-02-14 07:05:00', 1.70, 62.2
+  'user9@ghost.com', '2025-01-22 06:50:00', 1.78, 74.5
+  'user10@ghost.com', '2025-01-05 08:30:00', 1.66, 58.6
+  'user11@ghost.com', '2024-12-18 07:25:00', 1.81, 77.3
+  'user12@ghost.com', '2024-11-11 09:40:00', 1.63, 61.8
+  'user13@ghost.com', '2024-10-02 06:55:00', 1.79, 80.2
+  'user14@ghost.com', '2024-09-09 07:10:00', 1.67, 57.9
+  'user15@ghost.com', '2024-08-21 06:30:00', 1.82, 85.0
+  'user16@ghost.com', '2024-07-19 08:05:00', 1.64, 56.7
+  'user17@ghost.com', '2024-06-25 06:40:00', 1.77, 73.0
+  'user18@ghost.com', '2024-05-14 08:20:00', 1.69, 63.5
+  'user19@ghost.com', '2024-04-03 07:50:00', 1.83, 88.1
+  'user20@ghost.com', '2024-03-12 06:15:00', 1.65, 59.6
 }
 
-Objetivos_Semanal = {
-  Obj_Ent_Sem_ID:number, Obj_Ent_Sem_NumeroEntrenamientos:number, Obj_Ent_Sem_Distancia:number, Usu_Correo:string
+WeeklyGoal = {
+  user_Email:string, wee_StartDate:string, wee_TrainingQuantity:number, wee_Distance:number, wee_Completed:number
+  'user1@ghost.com', '2025-10-20 00:00:00', 3, 30.00, 0
+  'user2@ghost.com', '2025-10-20 00:00:00', 4, 40.50, 0
+  'user3@ghost.com', '2025-10-13 00:00:00', 2, 20.00, 1
+  'user4@ghost.com', '2025-10-20 00:00:00', 5, 55.00, 0
+  'user5@ghost.com', '2025-10-06 00:00:00', 3, 30.00, 1
+  'user6@ghost.com', '2025-10-20 00:00:00', 4, 36.00, 0
+  'user7@ghost.com', '2025-10-20 00:00:00', 5, 60.00, 0
+  'user8@ghost.com', '2025-10-13 00:00:00', 3, 25.00, 1
+  'user9@ghost.com', '2025-09-29 00:00:00', 2, 15.00, 1
+  'user10@ghost.com', '2025-10-20 00:00:00', 4, 42.00, 0
+  'user11@ghost.com', '2025-10-20 00:00:00', 3, 28.00, 0
+  'user12@ghost.com', '2025-10-06 00:00:00', 3, 26.50, 1
+  'user13@ghost.com', '2025-10-20 00:00:00', 5, 70.00, 0
+  'user14@ghost.com', '2025-10-20 00:00:00', 3, 24.00, 0
+  'user15@ghost.com', '2025-10-13 00:00:00', 4, 44.00, 1
+  'user16@ghost.com', '2025-10-20 00:00:00', 2, 18.00, 0
+  'user17@ghost.com', '2025-10-20 00:00:00', 5, 65.00, 0
+  'user18@ghost.com', '2025-10-20 00:00:00', 3, 27.00, 0
+  'user19@ghost.com', '2025-10-06 00:00:00', 4, 48.00, 1
+  'user20@ghost.com', '2025-10-20 00:00:00', 3, 30.00, 0
 }
 
-Ruta = {
-  Rut_ID:number, Rut_Distancia:number
+Route = {
+  rou_Id:number, rou_Distance:number
+  1, 5.10
+  2, 10.00
+  3, 7.25
+  4, 12.40
+  5, 3.60
+  6, 15.00
+  7, 6.50
+  8, 8.20
+  9, 9.90
+  10, 4.75
+  11, 11.00
+  12, 132.80
+  13, 13.30
+  14, 5.55
+  15, 7.70
+  16, 14.00
+  17, 6.00
+  18, 8.80
+  19, 10.50
+  20, 400.20
 }
 
-Coordenada = {
-  Coor_ID:number, Coor_Latitud:number, Coor_Longitud:number, Coor_Altitud:number, Rut_ID:number
+Coordinate = {
+  coo_Id:number, coo_Latitude:number, coo_Longitude:number, coo_Altitude:number
+  1, 4.7001, -74.0710, 255.0
+  2, 4.7012, -74.0725, 258.0
+  3, 4.7023, -74.0735, 260.0
+  4, 4.7034, -74.0745, 262.0
+  5, 4.7045, -74.0755, 265.0
+  6, 4.7056, -74.0765, 267.0
+  7, 4.7067, -74.0775, 270.0
+  8, 4.7078, -74.0785, 272.0
+  9, 4.7089, -74.0795, 274.0
+  10, 4.7090, -74.0805, 276.0
+  11, 4.7101, -74.0815, 278.0
+  12, 4.7112, -74.0825, 280.0
+  13, 4.7123, -74.0835, 282.0
+  14, 4.7134, -74.0845, 284.0
+  15, 4.7145, -74.0855, 286.0
+  16, 4.7156, -74.0865, 288.0
+  17, 4.7167, -74.0875, 290.0
+  18, 4.7178, -74.0885, 292.0
+  19, 4.7189, -74.0895, 294.0
+  20, 4.7190, -74.0905, 296.0
 }
 
-Entrenamiento = {
-  Ent_ID:number, Ent_Fecha:string, Ent_Hora_Inicio:string, Ent_Duracion:string, Ent_Distancia:number, Ent_Ritmo:number, Ent_Max_Speed:number, Ent_Avg_Speed:number, Ent_Calorias:number, Ent_CambioNivel:number, Usu_Correo:string, Rut_ID:number
+MonthlyChallenge = {
+  mon_id:number, mon_Distance:number, mon_StartDate:string, mon_EndDate:string
+  1, 100.00, '2025-01-01', '2025-01-31'
+  2, 150.00, '2025-02-01', '2025-02-28'
+  3, 200.00, '2025-03-01', '2025-03-31'
+  4, 80.00, '2025-04-01', '2025-04-30'
+  5, 250.00, '2025-05-01', '2025-05-31'
+  6, 120.00, '2025-06-01', '2025-06-30'
+  7, 300.00, '2025-07-01', '2025-07-31'
+  8, 50.00, '2025-08-01', '2025-08-31'
+  9, 400.00, '2025-09-01', '2025-09-30'
+  10, 75.00, '2025-10-01', '2025-10-31'
+  11, 90.00, '2025-11-01', '2025-11-30'
+  12, 110.00, '2025-12-01', '2025-12-31'
+  13, 130.00, '2026-01-01', '2026-01-31'
+  14, 95.00, '2026-02-01', '2026-02-28'
+  15, 85.00, '2026-03-01', '2026-03-31'
+  16, 210.00, '2026-04-01', '2026-04-30'
+  17, 170.00, '2026-05-01', '2026-05-31'
+  18, 60.00, '2026-06-01', '2026-06-30'
+  19, 140.00, '2026-07-01', '2026-07-31'
+  20, 180.00, '2026-08-01', '2026-08-31'
 }
 
-Km = {
-  Km_ID:number, Km_Tiempo:string, Km_Distancia:number, Ent_ID:number
+User_has_MonthlyChallenge = {
+  mon_Id:number, user_Email:string
+  1, 'user1@ghost.com'
+  2, 'user2@ghost.com'
+  3, 'user3@ghost.com'
+  4, 'user4@ghost.com'
+  5, 'user5@ghost.com'
+  6, 'user6@ghost.com'
+  7, 'user7@ghost.com'
+  8, 'user8@ghost.com'
+  9, 'user9@ghost.com'
+  10, 'user10@ghost.com'
+  11, 'user11@ghost.com'
+  12, 'user12@ghost.com'
+  13, 'user13@ghost.com'
+  14, 'user14@ghost.com'
+  15, 'user15@ghost.com'
+  16, 'user16@ghost.com'
+  17, 'user17@ghost.com'
+  18, 'user18@ghost.com'
+  19, 'user19@ghost.com'
+  20, 'user20@ghost.com'
 }
 
-Reto = {
-  Ret_Men_ID:number, Ret_Men_Distancia:number, Ret_Men_Fecha_Inicio:string, Ret_Men_Fecha_Finalizacion:string
+Route_has_Coordinate = {
+  rou_Id:number, coo_Id:number
+  1, 1
+  1, 2
+  1, 3
+  2, 2
+  2, 3
+  2, 4
+  3, 3
+  3, 4
+  3, 5
+  4, 4
+  4, 5
+  4, 6
+  5, 5
+  5, 6
+  5, 7
+  6, 6
+  6, 7
+  6, 8
+  7, 7
+  7, 8
+  7, 9
+  8, 8
+  8, 9
+  8, 10
+  9, 9
+  9, 10
+  9, 11
+  10, 10
+  10, 11
+  10, 12
+  11, 11
+  11, 12
+  11, 13
+  12, 12
+  12, 13
+  12, 14
+  13, 13
+  13, 14
+  13, 15
+  14, 14
+  14, 15
+  14, 16
+  15, 15
+  15, 16
+  15, 17
+  16, 16
+  16, 17
+  16, 18
+  17, 17
+  17, 18
+  17, 19
+  18, 18
+  18, 19
+  18, 20
+  19, 19
+  19, 20
+  19, 1
+  20, 20
+  20, 1
+  20, 2
 }
 
-Inscripcion_Reto = {
-  Ret_ID:number, Usu_Correo:string
+Training = {
+  tra_Counter:number, user_Email:string, rou_Id:number, tra_Datetime:string, tra_Duration:string, tra_Rithm:number, tra_MaxSpeed:number, tra_AvgSpeed:number, tra_Calories:number, tra_ElevationGain:number, tra_TrainingType:string, tra_IsGhost:number, tra_AvgStride:number
+  1, 'user1@ghost.com', 1, '2025-10-20 06:00:00', '00:45:00', 5.50, 12.00, 9.00, 420.00, 45.0, 'Running', 0, 80.0
+  2, 'user2@ghost.com', 2, '2025-10-21 07:30:00', '01:10:00', 5.90, 15.00, 11.00, 650.00, 120.0, 'Cycling', 1, NULL
+  3, 'user3@ghost.com', 3, '2025-10-18 18:15:00', '00:30:00', 6.00, 11.50, 10.50, 300.00, 20.0, 'Running', 0, 78.0
+  4, 'user4@ghost.com', 4, '2025-10-19 05:50:00', '00:52:00', 5.20, 13.00, 10.00, 480.00, 60.0, 'Running', 0, 82.0
+  5, 'user5@ghost.com', 5, '2025-10-20 09:10:00', '00:55:00', 5.60, 14.00, 10.50, 510.00, 90.0, 'Cycling', 0, NULL
+  6, 'user6@ghost.com', 6, '2025-10-17 06:40:00', '00:38:00', 5.40, 12.50, 9.50, 390.00, 40.0, 'Running', 0, 79.0
+  7, 'user7@ghost.com', 7, '2025-10-16 07:00:00', '01:30:00', 6.10, 18.00, 12.00, 900.00, 200.0, 'Cycling', 1, NULL
+  8, 'user8@ghost.com', 8, '2025-10-15 06:15:00', '00:35:00', 5.30, 11.80, 9.20, 360.00, 30.0, 'Running', 0, 81.0
+  9, 'user9@ghost.com', 9, '2025-10-14 18:05:00', '00:50:00', 5.70, 13.50, 10.80, 500.00, 70.0, 'Running', 0, 77.0
+  10, 'user10@ghost.com', 10, '2025-10-13 07:20:00', '00:27:00', 5.10, 10.50, 9.50, 250.00, 15.0, 'Running', 0, 83.0
+  11, 'user11@ghost.com', 11, '2025-10-12 06:45:00', '01:05:00', 5.95, 16.00, 12.50, 700.00, 140.0, 'Cycling', 1, NULL
+  12, 'user12@ghost.com', 12, '2025-10-11 06:00:00', '00:46:00', 5.65, 12.30, 9.80, 430.00, 50.0, 'Running', 0, 79.0
+  13, 'user13@ghost.com', 13, '2025-10-10 05:50:00', '02:10:00', 6.30, 20.00, 14.00, 1200.00, 300.0, 'Cycling', 1, NULL
+  14, 'user14@ghost.com', 14, '2025-10-09 06:30:00', '00:33:00', 5.25, 11.20, 9.70, 310.00, 35.0, 'Running', 0, 80.0
+  15, 'user15@ghost.com', 15, '2025-10-08 07:10:00', '01:05:00', 5.85, 15.50, 12.00, 680.00, 130.0, 'Cycling', 0, NULL
+  16, 'user16@ghost.com', 16, '2025-10-07 05:55:00', '00:28:00', 5.45, 11.00, 9.20, 270.00, 18.0, 'Running', 0, 82.0
+  17, 'user17@ghost.com', 17, '2025-10-06 06:10:00', '00:59:00', 5.60, 13.00, 10.40, 460.00, 65.0, 'Running', 0, 78.0
+  18, 'user18@ghost.com', 18, '2025-10-05 06:00:00', '00:48:00', 5.70, 13.20, 10.60, 490.00, 72.0, 'Running', 0, 79.0
+  19, 'user19@ghost.com', 19, '2025-10-04 07:40:00', '00:42:00', 5.35, 11.90, 9.90, 340.00, 28.0, 'Running', 0, 81.0
+  20, 'user20@ghost.com', 20, '2025-10-03 06:05:00', '00:34:00', 5.15, 10.80, 9.40, 280.00, 22.0, 'Running', 0, 84.0
 }
 
-Publicacion = {
-  Pub_ID:number, Pub_Likes:number, Pub_ImagenRuta:string, Pub_Privacidad:number, Usu_Correo:string, Rut_ID:number
+Kilometer = {
+  km_Counter:number, Km_Time:string, rou_Id:number, tra_Counter:number, user_Email:string
+  5001, '00:05:20', 1, 1, 'user1@ghost.com'
+  5002, '00:06:10', 2, 2, 'user2@ghost.com'
+  5003, '00:05:50', 3, 3, 'user3@ghost.com'
+  5004, '00:04:40', 4, 4, 'user4@ghost.com'
+  5005, '00:05:55', 5, 5, 'user5@ghost.com'
+  5006, '00:05:00', 6, 6, 'user6@ghost.com'
+  5007, '00:06:30', 7, 7, 'user7@ghost.com'
+  5008, '00:05:10', 8, 8, 'user8@ghost.com'
+  5009, '00:05:45', 9, 9, 'user9@ghost.com'
+  5010, '00:04:55', 10, 10, 'user10@ghost.com'
+  5011, '00:06:05', 11, 11, 'user11@ghost.com'
+  5012, '00:05:25', 12, 12, 'user12@ghost.com'
+  5013, '00:07:10', 13, 13, 'user13@ghost.com'
+  5014, '00:05:35', 14, 14, 'user14@ghost.com'
+  5015, '00:06:50', 15, 15, 'user15@ghost.com'
+  5016, '00:05:05', 16, 16, 'user16@ghost.com'
+  5017, '00:05:55', 17, 17, 'user17@ghost.com'
+  5018, '00:05:15', 18, 18, 'user18@ghost.com'
+  5019, '00:05:40', 19, 19, 'user19@ghost.com'
+  5020, '00:06:00', 20, 20, 'user20@ghost.com'
 }
 
-Cycling = {
-  Cyc_LongitudPedaleo:number, Usu_Correo:string, Ent_ID:number, Tipo:string
+Publication = {
+  pub_Counter:number, pub_Likes:number, pub_RouteImage:string, pub_Privacity:number, pub_Datetime:string, user_Email:string, tra_Counter:number, rou_Id:number
+  1, 10, 'img_route1.jpg', 0, '2025-10-20 08:00:00', 'user1@ghost.com', 1, 1
+  2, 4, NULL, 2, '2025-10-21 10:00:00', 'user2@ghost.com', 2, 2
+  3, 8, 'img_route3.jpg', 0, '2025-10-19 07:30:00', 'user3@ghost.com', 3, 3
+  4, 12, 'img_route4.jpg', 0, '2025-10-18 09:00:00', 'user4@ghost.com', 4, 4
+  5, 3, NULL, 1, '2025-10-17 12:00:00', 'user5@ghost.com', 5, 5
+  6, 20, 'img_route6.jpg', 0, '2025-10-16 14:00:00', 'user6@ghost.com', 6, 6
+  7, 7, NULL, 2, '2025-10-15 16:00:00', 'user7@ghost.com', 7, 7
+  8, 6, 'img_route8.jpg', 0, '2025-10-14 18:00:00', 'user8@ghost.com', 8, 8
+  9, 9, NULL, 0, '2025-10-13 06:00:00', 'user9@ghost.com', 9, 9
+  10, 2, 'img_route10.jpg', 1, '2025-10-12 07:30:00', 'user10@ghost.com', 10, 10
+  11, 14, 'img_route11.jpg', 0, '2025-10-11 08:20:00', 'user11@ghost.com', 11, 11
+  12, 1, NULL, 2, '2025-10-10 09:10:00', 'user12@ghost.com', 12, 12
+  13, 18, 'img_route13.jpg', 0, '2025-10-09 10:00:00', 'user13@ghost.com', 13, 13
+  14, 5, 'img_route14.jpg', 1, '2025-10-08 11:00:00', 'user14@ghost.com', 14, 14
+  15, 11, NULL, 0, '2025-10-07 12:30:00', 'user15@ghost.com', 15, 15
+  16, 13, 'img_route16.jpg', 0, '2025-10-06 13:00:00', 'user16@ghost.com', 16, 16
+  17, 0, NULL, 2, '2025-10-05 14:10:00', 'user17@ghost.com', 17, 17
+  18, 16, 'img_route18.jpg', 0, '2025-10-04 15:30:00', 'user18@ghost.com', 18, 18
+  19, 21, 'img_route19.jpg', 0, '2025-10-03 16:40:00', 'user19@ghost.com', 19, 19
+  20, 19, 'img_route20.jpg', 1, '2025-10-02 17:50:00', 'user20@ghost.com', 20, 20
 }
 
-Running = {
-  Run_LongitudPaso:number, Usu_Correo:string, Ent_ID:number, Tipo:string
+Followed = {
+  user_EmailFollower:string, user_EmailFollowed:string
+  'user2@ghost.com', 'user1@ghost.com'
+  'user3@ghost.com', 'user1@ghost.com'
+  'user4@ghost.com', 'user2@ghost.com'
+  'user5@ghost.com', 'user3@ghost.com'
+  'user6@ghost.com', 'user4@ghost.com'
+  'user7@ghost.com', 'user5@ghost.com'
+  'user8@ghost.com', 'user6@ghost.com'
+  'user9@ghost.com', 'user7@ghost.com'
+  'user10@ghost.com', 'user8@ghost.com'
+  'user11@ghost.com', 'user9@ghost.com'
+  'user12@ghost.com', 'user10@ghost.com'
+  'user13@ghost.com', 'user11@ghost.com'
+  'user14@ghost.com', 'user12@ghost.com'
+  'user15@ghost.com', 'user13@ghost.com'
+  'user16@ghost.com', 'user14@ghost.com'
+  'user17@ghost.com', 'user15@ghost.com'
+  'user18@ghost.com', 'user16@ghost.com'
+  'user19@ghost.com', 'user17@ghost.com'
+  'user20@ghost.com', 'user18@ghost.com'
+  'user1@ghost.com', 'user19@ghost.com'
 }
 
-Entrenamientos_Usuario = {
-  Usu_Correo:string, Ent_ID:number
-}
-
-Seguidos = {
-  Usu_Correo1:string, Usu_Correo2:string
+Comments = {
+  pub_Counter:number, user_Email:string, tra_Counter:number, rou_Id:number, com_Counter:number, com_Text:string, com_Likes:number, com_Datetime:string
+  1, 'user1@ghost.com', 1, 1, 1, 'Great run!', 5, '2025-10-20 09:00:00'
+  1, 'user1@ghost.com', 1, 1, 2, 'Wow, fast!', 3, '2025-10-20 09:05:00'
+  2, 'user2@ghost.com', 2, 2, 3, 'Nice bike ride.', 2, '2025-10-21 11:00:00'
+  3, 'user3@ghost.com', 3, 3, 4, 'Keep it up!', 8, '2025-10-19 08:00:00'
+  4, 'user4@ghost.com', 4, 4, 5, 'Awesome distance!', 12, '2025-10-18 10:00:00'
+  6, 'user6@ghost.com', 6, 6, 6, 'Amazing photo!', 15, '2025-10-16 15:00:00'
 }

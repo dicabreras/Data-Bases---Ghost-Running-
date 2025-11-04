@@ -109,7 +109,7 @@ CREATE TABLE Training (
   tra_Rithm DECIMAL(4,2) NOT NULL COMMENT 'Ritmo del entrenamiento.',
   tra_MaxSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad maxima conseguida en el entrenamiento.',
   tra_AvgSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad promedio conseguida en el entrenamiento.',
-  tra_Calories DECIMAL(5,2) NOT NULL COMMENT 'Calorías aproximadas consumidas.',
+  tra_Calories DECIMAL(6,2) NOT NULL COMMENT 'Calorías aproximadas consumidas.',
   tra_ElevationGain DECIMAL(5,2) NOT NULL COMMENT 'Cambio maximo de nivel (Punto mas alto - punto mas bajo)',
   tra_TrainingType ENUM('Running','Cycling') NOT NULL COMMENT 'Nos especifica de que tipo de entrenamiento estamos haciendo registro.',
   tra_IsGhost TINYINT NOT NULL COMMENT 'Indica si el entrenamiento esta habilitado para ser un ghost.',
