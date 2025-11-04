@@ -45,7 +45,7 @@ BEGIN
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;
         
-        -- A) PERMISOS DE ESCRITURA - CADA GRANT POR SEPARADO
+        -- 
         SET @grant1 = CONCAT('GRANT INSERT ON Ghost_Running.Training TO ''', user_name, '''@''%''');
         PREPARE stmt FROM @grant1;
         EXECUTE stmt;
@@ -107,13 +107,13 @@ BEGIN
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;
         
-        -- C) PERMISOS PARA ACTUALIZAR INFORMACIÓN BÁSICA
+        -- 
         SET @grant13 = CONCAT('GRANT UPDATE (user_Names, user_LastNames, user_Description, user_ProfilePhoto, user_Age) ON Ghost_Running.UserGR TO ''', user_name, '''@''%''');
         PREPARE stmt FROM @grant13;
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;
         
-        -- D) VISTAS SEGURAS DEL USUARIO
+        -- 
         SET @grant14 = CONCAT('GRANT SELECT ON Ghost_Running.vw_user_my_trainings TO ''', user_name, '''@''%''');
         PREPARE stmt FROM @grant14;
         EXECUTE stmt;
@@ -144,7 +144,7 @@ BEGIN
         EXECUTE stmt;
         DEALLOCATE PREPARE stmt;
         
-        -- E) VISTAS PÚBLICAS
+        -- 
         SET @grant20 = CONCAT('GRANT SELECT ON Ghost_Running.vw_top_routes TO ''', user_name, '''@''%''');
         PREPARE stmt FROM @grant20;
         EXECUTE stmt;
