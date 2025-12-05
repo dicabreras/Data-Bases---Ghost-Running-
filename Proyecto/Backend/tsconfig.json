@@ -1,0 +1,20 @@
+{
+  "compilerOptions": {
+    /* Base Options */
+    "target": "es2020",   // JavaScript version to compile
+    "module": "commonjs",
+    "rootDir": "./src",   // Tells TypeScript where the code is allocated
+    "outDir": "./dist",   // Where to put the code
+    "esModuleInterop": true,
+    "forceConsistentCasingInFileNames": true,
+    "strict": true, 
+    "skipLibCheck": true,
+    
+    /* TypeORM/Decorators */
+    "emitDecoratorMetadata": true,    // Decorators function in order to allow TypeORM to read them
+    "experimentalDecorators": true, 
+    "resolveJsonModule": true
+  },
+  "include": ["src/**/*", "index.ts"],
+  "exclude": ["node_modules"]
+}

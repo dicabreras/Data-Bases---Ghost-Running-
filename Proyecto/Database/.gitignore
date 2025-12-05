@@ -1,0 +1,3 @@
+/node_modules
+db_images/*
+!db_images/nouserimage.png

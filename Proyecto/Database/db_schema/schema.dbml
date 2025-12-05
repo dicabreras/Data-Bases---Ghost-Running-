@@ -1,0 +1,135 @@
+// DBML schema for ingesoft-i PostgreSQL database
+// Generated from init.sql and entity definitions
+
+Table UserGR {
+  email varchar [pk]
+  username varchar
+  password varchar
+  names varchar
+  lastNames varchar
+  age int
+  profilePhoto varchar
+  description text
+  registrationDate timestamp
+  gender varchar
+}
+
+Table PhysicalState {
+  userEmail varchar [pk]
+  date timestamp [pk]
+  height decimal
+  weight decimal
+}
+
+Table WeeklyGoal {
+  userEmail varchar [pk]
+  startDate timestamp [pk]
+  trainingQuantity int
+  distance decimal
+  completed smallint
+}
+
+Table Route {
+  id serial [pk]
+  distance decimal
+}
+
+Table Coordinate {
+  id serial [pk]
+  latitude real
+  longitude real
+  altitude real
+}
+
+Table MonthlyChallenge {
+  id serial [pk]
+  distance decimal
+  startDate date
+  endDate date
+}
+
+Table User_has_MonthlyChallenge {
+  monId int [pk]
+  userEmail varchar [pk]
+}
+
+Table Route_has_Coordinate {
+  routeId int [pk]
+  coordinateId int [pk]
+}
+
+Table Training {
+  counter serial [pk]
+  userEmail varchar
+  routeId int
+  datetime timestamp
+  duration time
+  name varchar
+  rithm decimal
+  maxSpeed decimal
+  avgSpeed decimal
+  calories decimal
+  elevationGain decimal
+  image text
+  trainingType varchar
+  isGhost smallint
+  avgStride decimal
+}
+
+Table Kilometer {
+  counter serial [pk]
+  time time
+  routeId int [pk]
+  trainingCounter int [pk]
+  userEmail varchar [pk]
+}
+
+Table Publication {
+  counter serial [pk]
+  likes int
+  routeImage varchar
+  privacy int
+  datetime timestamp
+  userEmail varchar [pk]
+  trainingCounter int [pk]
+  routeId int [pk]
+}
+
+Table Comments {
+  publicationCounter int [pk]
+  userEmail varchar [pk]
+  trainingCounter int [pk]
+  routeId int [pk]
+  counter serial [pk]
+  text text
+  likes int
+  datetime timestamp
+}
+
+Table Followed {
+  emailFollower varchar [pk]
+  emailFollowed varchar [pk]
+}
+
+// Foreign key relationships
+Ref: PhysicalState.userEmail > UserGR.email
+Ref: WeeklyGoal.userEmail > UserGR.email
+Ref: User_has_MonthlyChallenge.monId > MonthlyChallenge.id
+Ref: User_has_MonthlyChallenge.userEmail > UserGR.email
+Ref: Route_has_Coordinate.routeId > Route.id
+Ref: Route_has_Coordinate.coordinateId > Coordinate.id
+Ref: Training.userEmail > UserGR.email
+Ref: Training.routeId > Route.id
+Ref: Kilometer.routeId > Route.id
+Ref: Kilometer.userEmail > Training.userEmail
+Ref: Kilometer.trainingCounter > Training.counter
+Ref: Kilometer.routeId > Training.routeId
+Ref: Publication.userEmail > Training.userEmail
+Ref: Publication.routeId > Training.routeId
+Ref: Publication.trainingCounter > Training.counter
+Ref: Comments.publicationCounter > Publication.counter
+Ref: Comments.userEmail > Publication.userEmail
+Ref: Comments.trainingCounter > Publication.trainingCounter
+Ref: Comments.routeId > Publication.routeId
+Ref: Followed.emailFollower > UserGR.email
+Ref: Followed.emailFollowed > UserGR.email

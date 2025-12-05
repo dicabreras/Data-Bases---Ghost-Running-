@@ -1,0 +1,58 @@
+{
+  "expo": {
+    "scheme": [
+      "ghostrunning",
+      "com.googleusercontent.apps.989383413728-qihtmberuo47voq2ccl77fkq1iaobi28"
+    ],
+    "name": "ghost-running-app",
+    "slug": "ghost-running-app",
+    "version": "1.0.0",
+    "jsEngine": "jsc",
+    "owner": "unemployedunal",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash-icon.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#ffffff"
+    },
+    "ios": {
+      "bundleIdentifier": "com.unemployed.ghostrunning",
+      "supportsTablet": true,
+      "infoPlist": {
+        "NSLocationWhenInUseUsageDescription": "Ghost Running needs your location to track your runs and show nearby routes."
+      }
+    },
+    "android": {
+      "package": "com.unemployed.ghostrunning",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "YOUR_GOOGLE_MAPS_API_KEY_HERE"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/favicon.png"
+    },
+    "extra": {
+      "GOOGLE_CLIENT_ID": "989383413728-utem44a7jp9nhtvr3h3ug2edr061n6jm.apps.googleusercontent.com",
+      "GOOGLE_WEB_CLIENT_ID": "989383413728-utem44a7jp9nhtvr3h3ug2edr061n6jm.apps.googleusercontent.com",
+      "GOOGLE_ANDROID_CLIENT_ID": "989383413728-e5js2knqbb77cd4i9tfkej50bj72i79r.apps.googleusercontent.com",
+      "GOOGLE_IOS_CLIENT_ID": "989383413728-qihtmberuo47voq2ccl77fkq1iaobi28.apps.googleusercontent.com",
+      "GOOGLE_EXPO_CLIENT_ID": "989383413728-utem44a7jp9nhtvr3h3ug2edr061n6jm.apps.googleusercontent.com",
+      "ANDROID_SHA1": "43:1D:0E:2E:40:60:DE:2C:08:6A:05:F8:03:D2:45:79:4B:A5:2D:5B"
+    }
+  }
+}
