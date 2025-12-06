@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, OneToMany } from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, OneToMany, JoinColumn } from "typeorm";
 import { User } from "./User";
 import { Training } from "./Training";
 import { Comment } from "./Comment";
@@ -30,10 +30,12 @@ export class Publication {
     	routeId!: number;
 
     @ManyToOne(() => User, user => user.publications)
+    @JoinColumn({ name: 'user_Email', referencedColumnName: 'email' })
     	user!: User;
 
-    @ManyToOne(() => Training, training => training.publications)
-    	training!: Training;
+	@ManyToOne(() => Training, training => training.publications)
+	@JoinColumn({ name: 'tra_Counter', referencedColumnName: 'counter' })
+		training!: Training;
 
     @OneToMany(() => Comment, comment => comment.publication)
     	comments!: Comment[];

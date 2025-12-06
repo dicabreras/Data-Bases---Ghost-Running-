@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne } from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { Route } from "./Route";
 import { Training } from "./Training";
 import { User } from "./User";
@@ -20,12 +20,15 @@ export class Kilometer {
     @PrimaryColumn({ name: "user_Email", length: 100 })
     	userEmail!: string;
 
-    @ManyToOne(() => Route, route => route.kilometers)
-    	route!: Route;
+	@ManyToOne(() => Route, route => route.kilometers)
+	@JoinColumn({ name: 'rou_Id', referencedColumnName: 'id' })
+		route!: Route;
 
-    @ManyToOne(() => Training, training => training.kilometers)
-    	training!: Training;
+	@ManyToOne(() => Training, training => training.kilometers)
+	@JoinColumn({ name: 'tra_Counter', referencedColumnName: 'counter' })
+		training!: Training;
 
-    @ManyToOne(() => User)
-    	user!: User;
+	@ManyToOne(() => User)
+	@JoinColumn({ name: 'user_Email', referencedColumnName: 'email' })
+		user!: User;
 }

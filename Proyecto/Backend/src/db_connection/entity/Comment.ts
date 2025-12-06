@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn } from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, CreateDateColumn, JoinColumn } from "typeorm";
 import { Publication } from "./Publication";
 
 @Entity("Comments")
@@ -29,6 +29,12 @@ export class Comment {
     @CreateDateColumn({ name: "com_Datetime" })
     	datetime!: Date;
 
-    @ManyToOne(() => Publication, publication => publication.comments)
-    	publication!: Publication;
+	@ManyToOne(() => Publication, publication => publication.comments)
+	@JoinColumn([
+		{ name: 'pub_Counter', referencedColumnName: 'counter' },
+		{ name: 'user_Email', referencedColumnName: 'userEmail' },
+		{ name: 'tra_Counter', referencedColumnName: 'trainingCounter' },
+		{ name: 'rou_Id', referencedColumnName: 'routeId' }
+	])
+		publication!: Publication;
 }

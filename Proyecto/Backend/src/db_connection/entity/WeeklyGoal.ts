@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne } from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
 
 @Entity("WeeklyGoal")
@@ -18,6 +18,7 @@ export class WeeklyGoal {
     @Column({ name: "wee_Completed", type: "tinyint" })
     	completed!: number;
 
-    @ManyToOne(() => User, user => user.weeklyGoals)
-    	user!: User;
+	@ManyToOne(() => User, user => user.weeklyGoals)
+	@JoinColumn({ name: 'user_Email', referencedColumnName: 'email' })
+		user!: User;
 }

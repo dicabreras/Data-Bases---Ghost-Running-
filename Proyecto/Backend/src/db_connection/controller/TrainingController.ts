@@ -112,8 +112,6 @@ export const saveTraining = async (req: Request, res: Response) => {
 
 		// Handle training image (base64) and save to disk if provided
 		let publicImageUrl: string | null = null;
-		// Will hold raw base64 image data (without data: prefix) if provided
-		let imageData: string | null = null;
 		try {
 			const rawImage = req.body.trainingImage;
 			const imageName = req.body.imageName;
@@ -124,14 +122,20 @@ export const saveTraining = async (req: Request, res: Response) => {
 				if (matches && matches.length === 4) {
 					ext = matches[2];
 					base64Data = matches[3];
-					// store full data URL so clients can render directly
-					imageData = `data:image/${ext};base64,${base64Data}`;
 				} else if (rawImage.startsWith('data:')) {
-					// rawImage already contains data: prefix
-					imageData = rawImage;
+					// rawImage already contains data: prefix; strip header to obtain base64
+					const headerMatch = rawImage.match(/^data:(image\/(\w+));base64,(.+)$/);
+					if (headerMatch && headerMatch.length === 4) {
+						ext = headerMatch[2];
+						base64Data = headerMatch[3];
+					} else {
+						// fallback: try to remove until first comma
+						const idx = rawImage.indexOf(',');
+						base64Data = idx >= 0 ? rawImage.slice(idx + 1) : rawImage;
+					}
 				} else {
 					// rawImage may already be raw base64 without data URL
-					imageData = `data:image/png;base64,${base64Data}`;
+					// keep base64Data as-is (initialized to rawImage)
 				}
 
 				let fileBase = (imageName && typeof imageName === 'string' && imageName.trim().length > 0) ? imageName.trim() : `training_${Date.now()}`;
@@ -152,7 +156,6 @@ export const saveTraining = async (req: Request, res: Response) => {
 			console.error('Error saving training image:', err);
 			publicImageUrl = null;
 		}
-
 		// Handle name uniqueness: if a name was provided, ensure it is unique per user
 		const providedName = name && typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
 		if (providedName) {
@@ -174,7 +177,7 @@ export const saveTraining = async (req: Request, res: Response) => {
 			avgSpeed: avgSpeed || 0,
 			calories: calories || 0,
 			elevationGain: elevationGain || 0,
-			image: imageData ?? publicImageUrl ?? undefined,
+			image: publicImageUrl ?? undefined,
 			trainingType: trainingType || 'Running',
 			isGhost: isGhost ? 1 : 0,
 			user: user,

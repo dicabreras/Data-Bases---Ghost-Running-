@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany } from "typeorm";
+import { Entity, Column, PrimaryGeneratedColumn, ManyToOne, OneToMany, JoinColumn } from "typeorm";
 import { User } from "./User";
 import { Route } from "./Route";
 import { Kilometer } from "./Kilometer";
@@ -51,11 +51,13 @@ export class Training {
 	@Column({ name: "tra_AvgStride", type: "decimal", precision: 5, scale: 2, nullable: true })
     	avgStride?: number;
 
-    @ManyToOne(() => User, user => user.trainings)
-    	user!: User;
+	@ManyToOne(() => User, user => user.trainings)
+	@JoinColumn({ name: 'user_Email', referencedColumnName: 'email' })
+		user!: User;
 
-    @ManyToOne(() => Route, route => route.trainings)
-    	route!: Route;
+	@ManyToOne(() => Route, route => route.trainings)
+	@JoinColumn({ name: 'rou_Id', referencedColumnName: 'id' })
+		route!: Route;
 
     @OneToMany(() => Kilometer, kilometer => kilometer.training)
     	kilometers!: Kilometer[];

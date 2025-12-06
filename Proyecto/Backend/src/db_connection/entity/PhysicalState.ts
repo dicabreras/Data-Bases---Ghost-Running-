@@ -1,4 +1,4 @@
-import { Entity, Column, PrimaryColumn, ManyToOne } from "typeorm";
+import { Entity, Column, PrimaryColumn, ManyToOne, JoinColumn } from "typeorm";
 import { User } from "./User";
 
 @Entity("PhysicalState")
@@ -15,6 +15,7 @@ export class PhysicalState {
     @Column({ name: "phy_Weight", type: "decimal", precision: 5, scale: 2 })
     	weight!: number;
 
-    @ManyToOne(() => User, user => user.physicalStates)
-    	user!: User;
+	@ManyToOne(() => User, user => user.physicalStates)
+	@JoinColumn({ name: 'user_Email', referencedColumnName: 'email' })
+		user!: User;
 }
