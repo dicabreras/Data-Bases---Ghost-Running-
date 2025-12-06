@@ -185,10 +185,10 @@ DROP PROCEDURE IF EXISTS sp_q01_users_with_challenge;
 DELIMITER //
 CREATE PROCEDURE sp_q01_users_with_challenge()
 BEGIN
-    SELECT DISTINCT u.User_Email
+    SELECT DISTINCT u.user_Email
     FROM UserGR AS u
     INNER JOIN User_has_MonthlyChallenge AS umc 
-        ON u.User_Email = umc.user_Email;
+        ON u.user_Email = umc.user_Email;
 END//
 DELIMITER ;
 
@@ -227,9 +227,9 @@ DROP PROCEDURE IF EXISTS sp_q04_users_without_trainings;
 DELIMITER //
 CREATE PROCEDURE sp_q04_users_without_trainings()
 BEGIN
-    SELECT u.User_Email
+    SELECT u.user_Email
     FROM UserGR AS u
-    WHERE u.User_Email NOT IN (
+    WHERE u.user_Email NOT IN (
         SELECT DISTINCT t.user_Email
         FROM Training AS t
     );
@@ -363,7 +363,7 @@ BEGIN
 
         -- Insertar un kilómetro
         INSERT INTO Kilometer (
-            Km_Time,
+            km_Time,
             rou_Id,
             tra_Counter,
             user_Email

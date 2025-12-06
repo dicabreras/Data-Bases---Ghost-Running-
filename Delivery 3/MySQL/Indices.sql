@@ -3,7 +3,7 @@ USE Ghost_Running;
 --  UserGR
 
 CREATE UNIQUE INDEX idx_usergr_username
-ON UserGR (User_Username);
+ON UserGR (user_Username);
 
 
 

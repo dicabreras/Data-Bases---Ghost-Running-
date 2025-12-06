@@ -1,8 +1,8 @@
 -- 1. Usuarios que han participado en al menos un reto
-SELECT DISTINCT u.User_Email
+SELECT DISTINCT u.user_Email
 FROM UserGR AS u
 INNER JOIN User_has_MonthlyChallenge AS umc 
-    ON u.User_Email = umc.user_Email;
+    ON u.user_Email = umc.user_Email;
 
 -- 2. Top usuarios por número de entrenamientos
 SELECT 
@@ -23,9 +23,9 @@ GROUP BY r.rou_Id
 ORDER BY avg_speed_kmh DESC;
 
 -- 4. Usuarios sin entrenamientos
-SELECT u.User_Email
+SELECT u.user_Email
 FROM UserGR AS u
-WHERE u.User_Email NOT IN (
+WHERE u.user_Email NOT IN (
     SELECT DISTINCT t.user_Email
     FROM Training AS t
 );
