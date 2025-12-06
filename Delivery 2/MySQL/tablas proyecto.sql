@@ -16,12 +16,11 @@ DROP TABLE IF EXISTS `WeeklyGoal`;
 DROP TABLE IF EXISTS `PhysicalState`;
 DROP TABLE IF EXISTS `UserGR`;
 
-
 -- Tabla UserGR
 CREATE TABLE UserGR (
-  user_Email VARCHAR(100) NOT NULL COMMENT 'Email electrónico único de cada userGR',
-  user_Username VARCHAR(45) NOT NULL COMMENT 'Nombre de userGR único',
-  user_Password VARCHAR(255) NOT NULL COMMENT 'Contraseña encriptada',
+  User_Email VARCHAR(100) NOT NULL COMMENT 'Email electrónico único de cada userGR',
+  User_Username VARCHAR(45) NOT NULL COMMENT 'Nombre de userGR único',
+  user_Password VARCHAR(45) NOT NULL COMMENT 'Contraseña encriptada',
   user_Names VARCHAR(45) NOT NULL COMMENT 'Nombre(s) del userGR',
   user_LastNames VARCHAR(45) NOT NULL COMMENT 'Apellido(s) del userGR',
   user_Age INT NOT NULL COMMENT 'Age del userGR',
@@ -29,7 +28,7 @@ CREATE TABLE UserGR (
   user_Description MEDIUMTEXT NULL COMMENT 'Descripción breve sobre el userGR.',
   user_RegistrationDate DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT 'Fecha de registro',
   user_gender VARCHAR(45) NULL COMMENT 'Género del userGR',
-  PRIMARY KEY (user_Email)
+  PRIMARY KEY (User_Email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Tabla PhysicalState
@@ -41,7 +40,7 @@ CREATE TABLE PhysicalState (
   PRIMARY KEY (user_Email, phy_Date)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE PhysicalState ADD FOREIGN KEY (user_Email) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE PhysicalState ADD FOREIGN KEY (user_Email) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla WeeklyGoal
 CREATE TABLE WeeklyGoal (
@@ -53,7 +52,7 @@ CREATE TABLE WeeklyGoal (
   PRIMARY KEY (user_Email, wee_StartDate)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE WeeklyGoal ADD FOREIGN KEY (user_Email) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE WeeklyGoal ADD FOREIGN KEY (user_Email) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Route
 CREATE TABLE Route (
@@ -80,14 +79,15 @@ CREATE TABLE MonthlyChallenge (
   PRIMARY KEY (mon_id)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='Representa algunos retos mensuales que se manejaran en la aplicación';
 
+-- Tabla User_has_MonthlyChallenge
 CREATE TABLE User_has_MonthlyChallenge (
-  mon_id INT NOT NULL COMMENT 'Reto al que el userGR se inscribio.',
-  user_Email VARCHAR(100) NOT NULL COMMENT 'userGR.',
-  PRIMARY KEY (mon_id, user_Email)
+  mon_Id INT NOT NULL COMMENT 'Reto al que el userGR se inscribio.',
+  user_Email VARCHAR(100) NOT NULL COMMENT 'userGR.',  -- Cambiado de 45 a 100
+  PRIMARY KEY (mon_Id, user_Email)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE User_has_MonthlyChallenge ADD FOREIGN KEY (mon_id) REFERENCES MonthlyChallenge(mon_id) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE User_has_MonthlyChallenge ADD FOREIGN KEY (user_Email) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE User_has_MonthlyChallenge ADD FOREIGN KEY (mon_Id) REFERENCES MonthlyChallenge(mon_Id) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE User_has_MonthlyChallenge ADD FOREIGN KEY (user_Email) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Route_has_Coordinate
 CREATE TABLE Route_has_Coordinate (
@@ -106,13 +106,11 @@ CREATE TABLE Training (
   rou_Id INT NOT NULL COMMENT 'Llave foranea a la ruta realizada por el userGR.',
   tra_Datetime DATETIME NOT NULL COMMENT 'Fecha y hora de inicio del entrenamiento',
   tra_Duration TIME NOT NULL COMMENT 'Duracion del entrenamiento.',
-  tra_Name VARCHAR(100) NULL COMMENT 'Nombre del entrenamiento',
   tra_Rithm DECIMAL(4,2) NOT NULL COMMENT 'Ritmo del entrenamiento.',
   tra_MaxSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad maxima conseguida en el entrenamiento.',
   tra_AvgSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad promedio conseguida en el entrenamiento.',
   tra_Calories DECIMAL(6,2) NOT NULL COMMENT 'Calorías aproximadas consumidas.',
   tra_ElevationGain DECIMAL(5,2) NOT NULL COMMENT 'Cambio maximo de nivel (Punto mas alto - punto mas bajo)',
-  tra_Image TEXT NULL COMMENT 'Imagen asociada al entrenamiento',
   tra_TrainingType ENUM('Running','Cycling') NOT NULL COMMENT 'Nos especifica de que tipo de entrenamiento estamos haciendo registro.',
   tra_IsGhost TINYINT NOT NULL COMMENT 'Indica si el entrenamiento esta habilitado para ser un ghost.',
   tra_AvgStride DECIMAL(5,2) NULL COMMENT 'Si el entrenamiento es de running, nos muestra la cadencia promedio.',
@@ -120,13 +118,13 @@ CREATE TABLE Training (
   UNIQUE KEY (user_Email, rou_Id, tra_Counter)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE Training ADD FOREIGN KEY (user_Email) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Training ADD FOREIGN KEY (user_Email) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
 ALTER TABLE Training ADD FOREIGN KEY (rou_Id) REFERENCES Route(rou_Id) ON DELETE CASCADE ON UPDATE CASCADE;
 
 -- Tabla Kilometer
 CREATE TABLE Kilometer (
   km_Counter INT NOT NULL AUTO_INCREMENT COMMENT 'Auxiliar para identificar el numero de kilometro del entrenamiento hecho',
-  km_Time TIME NOT NULL COMMENT 'Tiempo empleado en el km',
+  Km_Time TIME NOT NULL COMMENT 'Tiempo empleado en el km',
   rou_Id INT NOT NULL COMMENT 'Llave foranea del entrenamiento a la ruta asociada',  -- Cambiado de rou_id a rou_Id
   tra_Counter INT NOT NULL COMMENT 'Llave foranea del entrenamiento asociado.',
   user_Email VARCHAR(100) NOT NULL COMMENT 'Llave foranea al usuario.',
@@ -158,8 +156,8 @@ CREATE TABLE Followed (
   PRIMARY KEY (user_EmailFollower, user_EmailFollowed)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
-ALTER TABLE Followed ADD FOREIGN KEY (user_EmailFollower) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
-ALTER TABLE Followed ADD FOREIGN KEY (user_EmailFollowed) REFERENCES UserGR(user_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Followed ADD FOREIGN KEY (user_EmailFollower) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE Followed ADD FOREIGN KEY (user_EmailFollowed) REFERENCES UserGR(User_Email) ON DELETE CASCADE ON UPDATE CASCADE;
 
 
 -- Tabla Comments (Comentarios de publicaciones)
