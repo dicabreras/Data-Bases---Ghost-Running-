@@ -1,61 +1,55 @@
-import { Client } from 'pg';
+import mysql from 'mysql2/promise';
+import type { RowDataPacket } from 'mysql2';
 import * as dotenv from 'dotenv';
 import { readFileSync } from 'fs';
 import path from 'path';
 
-// Cargar .env desde raíz del proyecto (dos niveles arriba: Proyecto/Database -> ingesoft-i)
+// Cargar .env desde raíz del proyecto
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const createDatabase = async () => {
 	const dbName = process.env.DB_NAME as string;
+	const host = process.env.DB_HOST;
+	const port = Number(process.env.DB_PORT) || 3306;
+	const user = process.env.DB_USER;
+	const password = process.env.DB_PASSWORD;
 
-	const adminClient = new Client({
-		user: process.env.DB_USER,
-		host: process.env.DB_HOST,
-		password: process.env.DB_PASSWORD,
-		port: Number(process.env.DB_PORT)
-	});
-
+	// Conexión administrativa (sin base de datos especificada)
+	const adminConn = await mysql.createConnection({ host, port, user, password, multipleStatements: true });
 	try {
-		await adminClient.connect();
-
-		// Verificar si la base de datos existe
-		const checkResult = await adminClient.query(
-			`SELECT 1 FROM pg_database WHERE datname = $1`,
+		// Primero verificar si la base de datos ya existe. Si existe, no ejecutar init.sql.
+		const [schemaRows] = await adminConn.query<RowDataPacket[]>(
+			'SELECT SCHEMA_NAME FROM INFORMATION_SCHEMA.SCHEMATA WHERE SCHEMA_NAME = ?',
 			[dbName]
 		);
-
-		if (checkResult.rows.length === 0) {
-			// Crear base de datos si no existe
-			await adminClient.query(`CREATE DATABASE "${dbName}"`);
-			console.log(`Base de datos ${dbName} creada exitosamente`);
-		} else {
-			console.log(`Base de datos ${dbName} ya existe`);
+		const dbExists = Array.isArray(schemaRows) && schemaRows.length > 0;
+		if (dbExists) {
+			console.log(`La base de datos ${dbName} ya existe — no se ejecutará init.sql.`);
+			await adminConn.end();
+			return;
 		}
 
-		await adminClient.end();
+		// Si no existe, crear la base y ejecutar init.sql
+		await adminConn.query(`CREATE DATABASE \`${dbName}\` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`);
+		console.log(`(SCHEMA) Base de datos ${dbName} creada`);
 
+		// Cargar `init.sql`
+		const initPath = path.join(__dirname, './db_schema/init.sql');
+		let sqlScriptContent: string;
+		try {
+			sqlScriptContent = readFileSync(initPath, 'utf8');
+		} catch {
+			throw new Error('No se encontró el script SQL `db_schema/init.sql`. Por favor crea o restaura ese archivo.');
+		}
 
-		const dbClient = new Client({
-			user: process.env.DB_USER,
-			host: process.env.DB_HOST,
-			password: process.env.DB_PASSWORD,
-			port: Number(process.env.DB_PORT),
-			database: dbName
-		});
-		await dbClient.connect();
-
-		// init.sql está en db_schema/ dentro de Database/
-		const sqlScriptPath = path.join(__dirname, './db_schema/init.sql');
-		const sqlScriptContent = readFileSync(sqlScriptPath, 'utf8');
-
-		await dbClient.query(sqlScriptContent);
-		console.log('Tablas creadas/existentes aplicadas correctamente');
-
-		await dbClient.end();
+		// Ejecutar el script en la base creada
+		await adminConn.changeUser({ database: dbName });
+		await adminConn.query(sqlScriptContent);
+		console.log('Tablas creadas correctamente');
 	} catch (error) {
 		console.error('Error al crear la base de datos o las tablas:', error);
-
+	} finally {
+		await adminConn.end();
 	}
 };
 

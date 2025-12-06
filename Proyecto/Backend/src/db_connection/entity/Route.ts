@@ -6,21 +6,21 @@ import { Kilometer } from "./Kilometer";
 @Entity("Route")
 export class Route {
 
-    @PrimaryGeneratedColumn({ name: "id" })
+    @PrimaryGeneratedColumn({ name: "rou_Id" })
     	id!: number;
 
-    @Column({ name: "distance", type: "decimal", precision: 5, scale: 2 })
+    @Column({ name: "rou_Distance", type: "decimal", precision: 5, scale: 2 })
     	distance!: number;
 
     @ManyToMany(() => Coordinate)
     @JoinTable({
     	name: "Route_has_Coordinate",
     	joinColumn: {
-    		name: "routeId",
+    		name: "rou_Id",
     		referencedColumnName: "id"
     	},
     	inverseJoinColumn: {
-    		name: "coordinateId",
+    		name: "coo_Id",
     		referencedColumnName: "id"
     	}
     })

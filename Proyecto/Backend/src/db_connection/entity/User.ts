@@ -6,35 +6,35 @@ import { Publication } from "./Publication";
 
 @Entity("UserGR")
 export class User {
-    @PrimaryColumn({ name: "email", length: 100 })
+    @PrimaryColumn({ name: "user_Email", length: 100 })
     	email!: string;
 
-    @Column({ name: "username", length: 45, unique: true })
+    @Column({ name: "user_Username", length: 45, unique: true })
     	username!: string;
 
     // le quite el select: false porque no me dejaba hacer login :p
-    @Column({ name: "password", length: 255 })
+    @Column({ name: "user_Password", length: 255 })
     	password!: string;
 
-    @Column({ name: "names", length: 45 })
+    @Column({ name: "user_Names", length: 45 })
     	names!: string;
 
-    @Column({ name: "lastNames", length: 45 })
+    @Column({ name: "user_LastNames", length: 45 })
     	lastNames!: string;
 
-    @Column({ name: "age" })
+    @Column({ name: "user_Age" })
     	age!: number;
 
-    @Column({ name: "profilePhoto", length: 255, nullable: true })
+    @Column({ name: "user_ProfilePhoto", length: 255, nullable: true })
     	profilePhoto?: string;
 
-    @Column({ name: "description", type: "text", nullable: true })
+    @Column({ name: "user_Description", type: "text", nullable: true })
     	description?: string;
 
-    @CreateDateColumn({ name: "registrationDate" })
+    @CreateDateColumn({ name: "user_RegistrationDate" })
     	registrationDate!: Date;
 
-    @Column({ name: "gender", length: 45, nullable: true })
+    @Column({ name: "user_gender", length: 45, nullable: true })
     	gender?: string;
 
     @OneToMany(() => PhysicalState, physicalState => physicalState.user)

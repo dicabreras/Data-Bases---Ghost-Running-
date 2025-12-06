@@ -1,5 +1,5 @@
-// Proyecto/Database/seed-ghost.ts
-import { Client } from 'pg';
+import mysql from 'mysql2/promise';
+import { ResultSetHeader } from 'mysql2';
 import * as dotenv from 'dotenv';
 import path from 'path';
 
@@ -7,15 +7,14 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 const run = async () => {
 	const dbName = process.env.DB_NAME!;
-	const client = new Client({
-		user: process.env.DB_USER,
+	const conn = await mysql.createConnection({
 		host: process.env.DB_HOST,
+		port: Number(process.env.DB_PORT) || 3306,
+		user: process.env.DB_USER,
 		password: process.env.DB_PASSWORD,
-		port: Number(process.env.DB_PORT),
-		database: dbName
+		database: dbName,
+		multipleStatements: true
 	});
-
-	await client.connect();
 
 	// Accept email from command line argument or use default
 	const userEmail = process.argv[2] || 'ghost.tester@example.com';
@@ -23,30 +22,22 @@ const run = async () => {
 
 	try {
 		// Delete existing ghost trainings for this user first
-		const deleteResult = await client.query(
-			`DELETE FROM "Training" WHERE "userEmail" = $1 AND "isGhost" = 1 RETURNING counter;`,
+		await conn.execute<ResultSetHeader>(
+			`DELETE FROM Training WHERE user_Email = ? AND tra_IsGhost = 1;`,
 			[userEmail]
 		);
-		if (deleteResult.rowCount && deleteResult.rowCount > 0) {
-			console.log(`Deleted ${deleteResult.rowCount} old ghost training(s)`);
-		}
-
 		// 1) ensure user exists
-		await client.query(
-			`INSERT INTO "UserGR"(email, username, password, names, "lastNames", age, "registrationDate")
-       VALUES($1,$2,$3,$4,$5,$6,NOW())
-       ON CONFLICT ("email") DO NOTHING;`,
+		await conn.execute(
+			`INSERT INTO UserGR (user_Email, user_Username, user_Password, user_Names, user_LastNames, user_Age, user_RegistrationDate)
+			 VALUES (?, ?, ?, ?, ?, ?, NOW())
+			 ON DUPLICATE KEY UPDATE user_Email = user_Email;`,
 			[userEmail, 'ghosttester', 'password123', 'Ghost', 'Tester', 30]
 		);
 
 		// 2) create a route for 10.00 km
-		const routeRes = await client.query(
-			`INSERT INTO "Route"(distance) VALUES($1) RETURNING id, distance;`,
-			[10.00]
-		);
-		const routeId = routeRes.rows[0].id;
-		const routeDistance = routeRes.rows[0].distance;
-		console.log(`Created route id ${routeId} with distance ${routeDistance} km`);
+		const [routeRes] = await conn.execute<ResultSetHeader>(`INSERT INTO Route (rou_Distance) VALUES (?);`, [10.0]);
+		const routeId = routeRes.insertId;
+		console.log(`Created route id ${routeId} with distance 10.00 km`);
 
 		// 3) create coordinates for a realistic 10km route in Bogotá
 		const coords = [
@@ -74,60 +65,39 @@ const run = async () => {
 
 		const coordIds: number[] = [];
 		for (const c of coords) {
-			const r = await client.query(
-				`INSERT INTO "Coordinate"(latitude, longitude, altitude) VALUES($1,$2,$3) RETURNING id;`,
-				[c.lat, c.lon, c.alt]
-			);
-			coordIds.push(r.rows[0].id);
+			const [r] = await conn.execute<ResultSetHeader>(`INSERT INTO Coordinate (coo_Latitude, coo_Longitude, coo_Altitude) VALUES (?, ?, ?);`, [c.lat, c.lon, c.alt]);
+			coordIds.push(r.insertId);
 		}
 		console.log('Inserted coordinates', coordIds);
 
 		// 4) link coordinates to route
 		for (const cid of coordIds) {
-			await client.query(
-				`INSERT INTO "Route_has_Coordinate"("routeId","coordinateId") VALUES($1,$2) ON CONFLICT DO NOTHING;`,
-				[routeId, cid]
-			);
+			await conn.execute(`INSERT IGNORE INTO Route_has_Coordinate (rou_Id, coo_Id) VALUES (?, ?);`, [routeId, cid]);
 		}
 
-		// 5) insert the training (isGhost = 1)
-		const trainingRes = await client.query(
-			`INSERT INTO "Training" ("userEmail","routeId","datetime","duration","rithm","maxSpeed","avgSpeed","calories","elevationGain","trainingType","isGhost")
-       VALUES ($1,$2,NOW(),$3,$4,$5,$6,$7,$8,$9,$10)
-       RETURNING counter, "userEmail", duration, "avgSpeed", "isGhost";`,
+		// 5) insert the training (tra_IsGhost = 1)
+		const [trainingRes] = await conn.execute<ResultSetHeader>(
+			`INSERT INTO Training (user_Email, rou_Id, tra_Datetime, tra_Duration, tra_Rithm, tra_MaxSpeed, tra_AvgSpeed, tra_Calories, tra_ElevationGain, tra_TrainingType, tra_IsGhost)
+			 VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?);`,
 			[
 				userEmail,
 				routeId,
-				// duration HH:MM:SS format
 				'00:50:00',
-				// rithm (min/km)
 				5.0,
-				// maxSpeed (km/h)
 				15.5,
-				// avgSpeed (km/h)
 				12.0,
-				// calories
 				850,
-				// elevationGain (meters)
 				47,
 				'Running',
-				// isGhost
 				1
 			]
 		);
-
-		const training = trainingRes.rows[0];
-		console.log(`✅ Ghost training created:`);
-		console.log(`   Counter: ${training.counter}`);
-		console.log(`   User: ${training.userEmail}`);
-		console.log(`   Duration: ${training.duration}`);
-		console.log(`   Avg Speed: ${training.avgSpeed} km/h`);
-		console.log(`   Distance: ${routeDistance} km`);
-		console.log(`   IsGhost: ${training.isGhost}`);
+		const trainingId = trainingRes.insertId;
+		console.log(`✅ Ghost training created: Counter ${trainingId}, User ${userEmail}`);
 	} catch (err) {
 		console.error('Error seeding ghost training:', err);
 	} finally {
-		await client.end();
+		await conn.end();
 	}
 };
 

@@ -5,19 +5,19 @@ import { User } from "./User";
 
 @Entity("Kilometer")
 export class Kilometer {
-    @PrimaryColumn({ name: "counter" })
+    @PrimaryColumn({ name: "km_Counter" })
     	counter!: number;
 
-    @Column({ name: "time", type: "time" })
+    @Column({ name: "km_Time", type: "time" })
     	time!: string;
 
-    @PrimaryColumn({ name: "routeId" })
+    @PrimaryColumn({ name: "rou_Id" })
     	routeId!: number;
 
-    @PrimaryColumn({ name: "trainingCounter" })
+    @PrimaryColumn({ name: "tra_Counter" })
     	trainingCounter!: number;
 
-    @PrimaryColumn({ name: "userEmail", length: 100 })
+    @PrimaryColumn({ name: "user_Email", length: 100 })
     	userEmail!: string;
 
     @ManyToOne(() => Route, route => route.kilometers)

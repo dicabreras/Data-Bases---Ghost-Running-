@@ -3,16 +3,16 @@ import { Route } from "./Route";
 
 @Entity("Coordinate")
 export class Coordinate {
-    @PrimaryGeneratedColumn({ name: "id" })
+    @PrimaryGeneratedColumn({ name: "coo_Id" })
     	id!: number;
 
-    @Column({ name: "latitude", type: "real" })
+    @Column({ name: "coo_Latitude", type: "float" })
     	latitude!: number;
 
-    @Column({ name: "longitude", type: "real" })
+    @Column({ name: "coo_Longitude", type: "float" })
     	longitude!: number;
 
-    @Column({ name: "altitude", type: "real" })
+    @Column({ name: "coo_Altitude", type: "float" })
     	altitude!: number;
 
     @ManyToMany(() => Route, route => route.coordinates)

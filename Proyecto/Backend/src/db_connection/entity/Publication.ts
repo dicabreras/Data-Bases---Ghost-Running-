@@ -5,28 +5,28 @@ import { Comment } from "./Comment";
 
 @Entity("Publication")
 export class Publication {
-    @PrimaryColumn({ name: "counter" })
+    @PrimaryColumn({ name: "pub_Counter" })
     	counter!: number;
 
-    @Column({ name: "likes" })
+    @Column({ name: "pub_Likes" })
     	likes!: number;
 
-    @Column({ name: "routeImage", length: 255, nullable: true })
+    @Column({ name: "pub_RouteImage", length: 255, nullable: true })
     	routeImage?: string;
 
-    @Column({ name: "privacy" })
+    @Column({ name: "pub_Privacity" })
     	privacy!: number;
 
-    @Column({ name: "datetime" })
+    @Column({ name: "pub_Datetime" })
     	datetime!: Date;
 
-    @PrimaryColumn({ name: "userEmail", length: 100 })
+    @PrimaryColumn({ name: "user_Email", length: 100 })
     	userEmail!: string;
 
-    @PrimaryColumn({ name: "trainingCounter" })
+    @PrimaryColumn({ name: "tra_Counter" })
     	trainingCounter!: number;
 
-    @PrimaryColumn({ name: "routeId" })
+    @PrimaryColumn({ name: "rou_Id" })
     	routeId!: number;
 
     @ManyToOne(() => User, user => user.publications)
