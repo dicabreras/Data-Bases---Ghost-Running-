@@ -4,6 +4,7 @@ import { User } from '../entity/User';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import path from 'path';
+import { createDbUserViaStoredProc } from '../services/dbUserService';
 
 // Configure multer for profile photo uploads
 const storage = multer.diskStorage({
@@ -80,6 +81,17 @@ export const registerUser = async (req: Request, res: Response) => {
 			profilePhoto: profilePhoto || undefined
 		});
 		await userRepository.save(newUser);
+
+		// Intentar crear usuario de DB asociado (no bloqueante)
+		try {
+			const created = await createDbUserViaStoredProc(newUser.username, 'user', newUser.password);
+			if (created) {
+				console.log(`DB user created: ${created.dbUsername} for app user ${newUser.email}`);
+			}
+		} catch (err) {
+			console.error('Error creating DB user via stored proc:', err);
+		}
+
 		return res.status(201).json({ message: "User registered successfully", data: { username, email, profilePhoto }});
 	} catch (error) {
 		console.error("Error registering user:", error);

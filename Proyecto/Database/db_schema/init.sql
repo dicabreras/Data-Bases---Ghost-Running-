@@ -88,7 +88,7 @@ CREATE TABLE Training (
   rou_Id INT NOT NULL COMMENT 'Llave foranea a la ruta realizada por el userGR.',
   tra_Datetime DATETIME NOT NULL COMMENT 'Fecha y hora de inicio del entrenamiento',
   tra_Duration TIME NOT NULL COMMENT 'Duracion del entrenamiento.',
-  tra_Name VARCHAR(100) NULL COMMENT 'Nombre del entrenamiento',
+  tra_Name VARCHAR(100) NOT NULL COMMENT 'Nombre del entrenamiento',
   tra_Rithm DECIMAL(4,2) NOT NULL COMMENT 'Ritmo del entrenamiento.',
   tra_MaxSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad maxima conseguida en el entrenamiento.',
   tra_AvgSpeed DECIMAL(5,2) NOT NULL COMMENT 'Velocidad promedio conseguida en el entrenamiento.',
