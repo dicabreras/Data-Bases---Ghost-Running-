@@ -77,7 +77,6 @@ SET
 WHERE mon_id = 1;
 
 
-
 -- BORRADOS
 
 -- Eliminar comentario específico
