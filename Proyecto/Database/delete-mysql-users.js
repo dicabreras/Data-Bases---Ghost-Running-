@@ -13,7 +13,7 @@
 
 const mysql = require('mysql2/promise');
 const crypto = require('crypto');
-require('dotenv').config({ path: '../.env' });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 
 const DB_HOST = process.env.DB_HOST || 'localhost';
 const DB_PORT = Number(process.env.DB_PORT) || 3306;

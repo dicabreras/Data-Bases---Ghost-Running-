@@ -1,6 +1,5 @@
 --  Actualizar el perfil de un usuario
 DROP PROCEDURE IF EXISTS sp_user_update_profile;
-DELIMITER //
 CREATE PROCEDURE sp_user_update_profile(
     IN p_user_email      VARCHAR(100),
     IN p_names           VARCHAR(45),
@@ -17,13 +16,11 @@ BEGIN
         user_Description = p_description,
         user_ProfilePhoto= p_profile_photo,
         user_Age         = p_age
-    WHERE User_Email = p_user_email COLLATE utf8mb4_0900_ai_ci;
-END//
-DELIMITER ;
+    WHERE user_Email = p_user_email COLLATE utf8mb4_0900_ai_ci;
+END;
 
 -- crear publicacion
  DROP PROCEDURE IF EXISTS sp_user_publish_training_with_comment;
-DELIMITER //
 CREATE PROCEDURE sp_user_publish_training_with_comment(
     IN p_user_email     VARCHAR(100),
     IN p_tra_counter    INT,
@@ -87,13 +84,11 @@ BEGIN
     );
 
     COMMIT;
-END//
-DELIMITER ;
+END;
 
 
 -- Seguir a un usuario (con validación transaccional)
 DROP PROCEDURE IF EXISTS sp_user_follow;
-DELIMITER //
 CREATE PROCEDURE sp_user_follow(
     IN p_follower_email VARCHAR(100),
     IN p_followed_email VARCHAR(100)
@@ -121,13 +116,11 @@ BEGIN
     VALUES (p_follower_email, p_followed_email);
 
     COMMIT;
-END//
-DELIMITER ;
+END;
 
 
 -- Dejar de seguir a un usuario
 DROP PROCEDURE IF EXISTS sp_user_unfollow;
-DELIMITER //
 CREATE PROCEDURE sp_user_unfollow(
     IN p_follower_email VARCHAR(100),
     IN p_followed_email VARCHAR(100)
@@ -136,8 +129,7 @@ BEGIN
     DELETE FROM Followed
     WHERE user_EmailFollower = p_follower_email
       AND user_EmailFollowed = p_followed_email;
-END//
-DELIMITER ;
+END;
 
 
 -- 

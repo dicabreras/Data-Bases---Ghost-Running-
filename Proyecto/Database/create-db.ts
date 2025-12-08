@@ -46,8 +46,42 @@ const createDatabase = async () => {
 		await adminConn.changeUser({ database: dbName });
 		await adminConn.query(sqlScriptContent);
 		console.log('Tablas creadas correctamente');
+
+		// Ejecutar otros scripts auxiliares en orden: Procedimientos, Usuarios, Triggers, Transacciones, Vistas, Indices
+		const extraFiles = [
+			'vistas.sql',
+			'Indices.sql',
+			'Triggers.sql',
+			'Procedimientos.sql',
+			'Usuarios.sql',
+			'Transacciones.sql'
+		];
+
+		for (const f of extraFiles) {
+			const p = path.join(__dirname, 'db_schema', f);
+			try {
+				const content = readFileSync(p, 'utf8');
+				if (content && content.trim().length > 0) {
+					console.log(`Ejecutando script: ${f}`);
+					await adminConn.query(content);
+					console.log(`Script ejecutado: ${f}`);
+				} else {
+					console.log(`Script vacío o no encontrado: ${f}`);
+				}
+			} catch (err) {
+				if (err instanceof Error) {
+					console.warn(`No se pudo ejecutar ${f}:`, err.message);
+				} else {
+					console.warn(`No se pudo ejecutar ${f}:`, String(err));
+				}
+			}
+		}
 	} catch (error) {
-		console.error('Error al crear la base de datos o las tablas:', error);
+		if (error instanceof Error) {
+			console.error('Error al crear la base de datos o las tablas:', error.message);
+		} else {
+			console.error('Error al crear la base de datos o las tablas:', String(error));
+		}
 	} finally {
 		await adminConn.end();
 	}

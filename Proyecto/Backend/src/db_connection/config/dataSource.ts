@@ -13,8 +13,8 @@ import { Kilometer } from "../entity/Kilometer";
 import { Publication } from "../entity/Publication";
 import { Comment } from "../entity/Comment";
 
-// Cargar .env desde raíz del proyecto (Backend está dentro de Proyecto)
-const envPath = path.resolve(__dirname, '../../../../.env');
+// Cargar .env desde la raíz del repositorio
+const envPath = path.resolve(__dirname, '../../../../../.env');
 console.log('🔍 Buscando .env en:', envPath);
 const envConfig = dotenv.config({ path: envPath });
 if (envConfig.error) {

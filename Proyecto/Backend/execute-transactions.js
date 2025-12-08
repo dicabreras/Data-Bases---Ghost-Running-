@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-require('dotenv').config({ path: require('path').resolve(__dirname, '../.env') });
+require('dotenv').config({ path: require('path').resolve(__dirname, '../../.env') });
 const fs = require('fs');
 const path = require('path');
 
@@ -34,11 +34,11 @@ async function executeTransactions() {
       
       if (normalizedSQL.length > 10) {
         try {
-          console.log(' Ejecutando transacción', i, '...');
+          console.log(' Ejecutando transacciï¿½n', i, '...');
           await connection.query(normalizedSQL);
-          console.log(' Transacción', i, 'ejecutada');
+          console.log(' Transacciï¿½n', i, 'ejecutada');
         } catch (e) {
-          console.error(' Transacción', i, 'error:', e.message.substring(0, 100));
+          console.error(' Transacciï¿½n', i, 'error:', e.message.substring(0, 100));
         }
       }
     }

@@ -44,9 +44,7 @@ GRANT SELECT ON Ghost_Running.vw_global_stats      TO 'ghost_public'@'%';
 --    (USUARIOS "NORMALES" -> SOLO PROCEDIMIENTOS)
 -- =====================================================
 
-DELIMITER //
-
-DROP PROCEDURE IF EXISTS CreateUserAccounts //
+DROP PROCEDURE IF EXISTS CreateUserAccounts;
 CREATE PROCEDURE CreateUserAccounts()
 BEGIN
     DECLARE done INT DEFAULT FALSE;
@@ -54,7 +52,7 @@ BEGIN
 
     -- Cursor: recorre todos los usernames definidos en la tabla lógica UserGR
     DECLARE cur CURSOR FOR
-        SELECT User_Username FROM UserGR;
+        SELECT user_Username FROM UserGR;
 
     DECLARE CONTINUE HANDLER FOR NOT FOUND SET done = TRUE;
 
@@ -200,24 +198,21 @@ BEGIN
     END LOOP;
 
     CLOSE cur;
-END //
-DELIMITER ;
+END;
 
 
 
 
 CALL CreateUserAccounts();
 
-
 DROP PROCEDURE IF EXISTS CreateUserAccounts;
 
 FLUSH PRIVILEGES;
-
 
 SELECT 'Usuarios creados exitosamente' AS Estado;
 
 SELECT user, host
 FROM mysql.user
 WHERE user = 'admin_ghost'
-   OR user = 'ghost_public'
-   OR user IN (SELECT User_Username FROM UserGR);
+    OR user = 'ghost_public'
+    OR user IN (SELECT user_Username FROM UserGR);

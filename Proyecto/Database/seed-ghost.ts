@@ -76,13 +76,16 @@ const run = async () => {
 		}
 
 		// 5) insert the training (tra_IsGhost = 1)
+		// Ensure tra_Name is provided because the schema requires NOT NULL
+		const trainingName = `Ghost ${routeId} - ${(new Date()).toISOString().slice(0,19).replace('T',' ')}`;
 		const [trainingRes] = await conn.execute<ResultSetHeader>(
-			`INSERT INTO Training (user_Email, rou_Id, tra_Datetime, tra_Duration, tra_Rithm, tra_MaxSpeed, tra_AvgSpeed, tra_Calories, tra_ElevationGain, tra_TrainingType, tra_IsGhost)
-			 VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?);`,
+			`INSERT INTO Training (user_Email, rou_Id, tra_Datetime, tra_Duration, tra_Name, tra_Rithm, tra_MaxSpeed, tra_AvgSpeed, tra_Calories, tra_ElevationGain, tra_TrainingType, tra_IsGhost)
+			 VALUES (?, ?, NOW(), ?, ?, ?, ?, ?, ?, ?, ?, ?);`,
 			[
 				userEmail,
 				routeId,
 				'00:50:00',
+				trainingName,
 				5.0,
 				15.5,
 				12.0,

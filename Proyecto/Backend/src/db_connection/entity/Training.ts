@@ -39,6 +39,12 @@ export class Training {
 	@Column({ name: "tra_TrainingType", length: 10 })
 		trainingType!: 'Running' | 'Cycling';
 
+	@Column({ name: "tra_Name", length: 200, nullable: true })
+		name?: string;
+
+	@Column({ name: "tra_Image", length: 255, nullable: true })
+		image?: string;
+
 	@Column({ name: "tra_IsGhost", type: "smallint" })
 		isGhost!: number;
 
