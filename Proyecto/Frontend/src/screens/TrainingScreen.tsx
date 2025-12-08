@@ -58,7 +58,7 @@ export default function TrainingScreen({ userEmail }: TrainingScreenProps) {
 			try {
 				const { status } = await Location.requestForegroundPermissionsAsync();
 				if (status !== 'granted') { return; }
-				const loc = await Location.getCurrentPositionAsync({});
+				const loc = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation });
 				if (mounted && loc) {
 					setCurrentLocation(loc);
 					// if map exists, animate to current location
@@ -255,8 +255,9 @@ export default function TrainingScreen({ userEmail }: TrainingScreenProps) {
 				const sub = await Location.watchPositionAsync(
 					{
 						accuracy: Location.Accuracy.BestForNavigation,
-						timeInterval: 3000,
-						distanceInterval: 10
+						timeInterval: 1000,
+						distanceInterval: 3,
+						mayShowUserSettingsDialog: true
 					},
 					(location) => {
 						// Build new point
@@ -335,7 +336,7 @@ export default function TrainingScreen({ userEmail }: TrainingScreenProps) {
 			Alert.alert('Permission Required', 'Please enable GPS permissions');
 			return;
 		}
-		const location = await Location.getCurrentPositionAsync({});
+		const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.BestForNavigation });
 		setCurrentLocation(location);
 		// center map when starting
 		if (mapRef.current && (mapRef.current as any).animateToRegion) {

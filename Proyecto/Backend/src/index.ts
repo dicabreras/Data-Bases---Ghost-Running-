@@ -3,9 +3,11 @@ import express from "express";
 import cors from "cors";
 import * as dotenv from "dotenv";
 import * as path from "path";
-import { getFirstUser, registerUser, loginUser, upload } from "./db_connection/controller/UserController";
+import { getFirstUser, registerUser, loginUser, upload, updateUserProfile } from "./db_connection/controller/UserController";
+import { getUserFeed } from "./db_connection/controller/FeedController";
 import { verifyGoogleToken, exchangeCodeForToken } from './db_connection/controller/AuthController';
 import { saveTraining, getUserTrainings, calculateTraining, replaceGhost, deleteTraining } from "./db_connection/controller/TrainingController";
+import { searchUsers, followUser, unfollowUser, getFollowStats, isFollowing } from "./db_connection/controller/FollowController";
 import Database from "./db_connection/db/Database";
 
 // Modulo para obtener la ip local
@@ -36,6 +38,7 @@ Database.initialize()
 
 		app.post("/api/login", loginUser);
 		app.post("/api/register", upload.single('profilePhoto'), registerUser);
+		app.put("/api/users/:email/profile", updateUserProfile);
 
 		// Google freaking OAuth endpoints
 		app.post('/api/auth/google', express.json(), verifyGoogleToken);
@@ -48,6 +51,14 @@ Database.initialize()
 		app.post("/api/trainings/replace-ghost", replaceGhost);
 		app.get("/api/trainings/:userEmail", getUserTrainings);
 		app.delete('/api/trainings/:counter', deleteTraining);
+		app.get('/api/feed/:userEmail', getUserFeed);
+
+		// Follow/unfollow endpoints
+		app.get('/api/users/search', searchUsers);
+		app.post('/api/users/follow', followUser);
+		app.delete('/api/users/follow', unfollowUser);
+		app.get('/api/users/:email/follow-stats', getFollowStats);
+		app.get('/api/users/is-following', isFollowing);
 
 		app.listen(PORT, () => {
 			console.log(`🚀 Servidor Express corriendo en el puerto ${PORT}`);

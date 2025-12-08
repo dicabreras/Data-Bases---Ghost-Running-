@@ -17,7 +17,7 @@ BEGIN
         user_Description = p_description,
         user_ProfilePhoto= p_profile_photo,
         user_Age         = p_age
-    WHERE User_Email = p_user_email;
+    WHERE User_Email = p_user_email COLLATE utf8mb4_0900_ai_ci;
 END//
 DELIMITER ;
 
@@ -87,6 +87,55 @@ BEGIN
     );
 
     COMMIT;
+END//
+DELIMITER ;
+
+
+-- Seguir a un usuario (con validación transaccional)
+DROP PROCEDURE IF EXISTS sp_user_follow;
+DELIMITER //
+CREATE PROCEDURE sp_user_follow(
+    IN p_follower_email VARCHAR(100),
+    IN p_followed_email VARCHAR(100)
+)
+BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Validar que ambos usuarios existan
+    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email = p_follower_email) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Follower user does not exist';
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email = p_followed_email) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Followed user does not exist';
+    END IF;
+
+    -- Insertar relación (trigger previene auto-seguimiento)
+    INSERT INTO Followed (user_EmailFollower, user_EmailFollowed)
+    VALUES (p_follower_email, p_followed_email);
+
+    COMMIT;
+END//
+DELIMITER ;
+
+
+-- Dejar de seguir a un usuario
+DROP PROCEDURE IF EXISTS sp_user_unfollow;
+DELIMITER //
+CREATE PROCEDURE sp_user_unfollow(
+    IN p_follower_email VARCHAR(100),
+    IN p_followed_email VARCHAR(100)
+)
+BEGIN
+    DELETE FROM Followed
+    WHERE user_EmailFollower = p_follower_email
+      AND user_EmailFollowed = p_followed_email;
 END//
 DELIMITER ;
 

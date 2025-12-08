@@ -4,7 +4,7 @@ import { User } from '../entity/User';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
 import path from 'path';
-import { createDbUserViaStoredProc } from '../services/dbUserService';
+import { createDbUserViaStoredProc, updateUserProfileViaStoredProc } from '../services/dbUserService';
 
 // Configure multer for profile photo uploads
 const storage = multer.diskStorage({
@@ -41,6 +41,9 @@ export const upload = multer({
 export const registerUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 	try {
+		console.log('📝 Iniciar registro de usuario');
+		console.log('📋 Body recibido:', JSON.stringify(req.body));
+		console.log('📎 Archivo:', req.file ? req.file.filename : 'No file');
 
 		const { username, email, name, lastname, age, password, gender, description } = req.body ?? {};
 		const requiredFields = { username, email, name, lastname, age, password };
@@ -80,7 +83,10 @@ export const registerUser = async (req: Request, res: Response) => {
 			description: description || undefined,
 			profilePhoto: profilePhoto || undefined
 		});
+		
+		console.log('💾 Guardando usuario en BD:', username);
 		await userRepository.save(newUser);
+		console.log('✅ Usuario guardado exitosamente');
 
 		// Intentar crear usuario de DB asociado (no bloqueante)
 		try {
@@ -94,8 +100,12 @@ export const registerUser = async (req: Request, res: Response) => {
 
 		return res.status(201).json({ message: "User registered successfully", data: { username, email, profilePhoto }});
 	} catch (error) {
-		console.error("Error registering user:", error);
-		res.status(500).json({ message: "Internal server error" });
+		console.error("❌ Error registering user:", error);
+		if (error instanceof Error) {
+			console.error("Mensaje:", error.message);
+			console.error("Stack:", error.stack);
+		}
+		res.status(500).json({ message: "Internal server error", error: error instanceof Error ? error.message : String(error) });
 	}
 };
 
@@ -141,8 +151,92 @@ export const loginUser = async (req: Request, res: Response) => {
 
 		return res.status(200).json({ message: "Login successful", user: userData });
 	} catch (error) {
-		console.error("Error logging in user:", error);
+		console.error("Error fetching user:", error);
 		res.status(500).json({ message: "Internal server error" });
+	}
+};
+
+/**
+ * Endpoint para actualizar el perfil de un usuario usando sp_user_update_profile.
+ * PUT /api/users/:email/profile
+ * Body: { names, lastnames, description, profilePhoto, age }
+ */
+export const updateUserProfile = async (req: Request, res: Response) => {
+	try {
+		const { email } = req.params;
+		const { names, lastnames, description, profilePhoto, age } = req.body;
+
+		// Validar parámetros requeridos
+		if (!email) {
+			return res.status(400).json({ error: 'Email is required in URL parameter' });
+		}
+
+		if (!names || !lastnames || age === undefined) {
+			return res.status(400).json({ 
+				error: 'Required fields: names, lastnames, age',
+				received: { names, lastnames, age }
+			});
+		}
+
+		// Validar que el usuario existe en TypeORM
+		const userRepository = Database.getInstance().getRepository(User);
+		const user = await userRepository.findOne({ where: { email } });
+
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		console.log(`📝 Actualizando perfil de usuario: ${email}`);
+
+		// Llamar al stored procedure
+		const result = await updateUserProfileViaStoredProc(
+			email,
+			names,
+			lastnames,
+			description || '',
+			profilePhoto || '',
+			parseInt(age.toString())
+		);
+
+		if (!result.success) {
+			console.error('❌ Error en sp_user_update_profile:', result.error);
+			return res.status(500).json({ 
+				error: 'Failed to update profile via stored procedure',
+				details: result.error 
+			});
+		}
+
+		console.log('✅ Perfil actualizado exitosamente vía stored procedure');
+
+		// Actualizar también la entidad TypeORM para mantener sincronización
+		user.names = names;
+		user.lastNames = lastnames;
+		user.description = description || '';
+		user.profilePhoto = profilePhoto || '';
+		user.age = parseInt(age.toString());
+		await userRepository.save(user);
+
+		console.log('✅ Entidad TypeORM sincronizada');
+
+		return res.status(200).json({
+			message: 'Profile updated successfully',
+			data: {
+				email: user.email,
+				username: user.username,
+				names: user.names,
+				lastNames: user.lastNames,
+				description: user.description,
+				profilePhoto: user.profilePhoto,
+				age: user.age
+			}
+		});
+
+	} catch (error) {
+		console.error('❌ Error updating user profile:', error);
+		return res.status(500).json({ 
+			error: 'Internal server error',
+			details: error instanceof Error ? error.message : 'Unknown error'
+		});
 	}
 };
 

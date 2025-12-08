@@ -13,17 +13,27 @@ import { Kilometer } from "../entity/Kilometer";
 import { Publication } from "../entity/Publication";
 import { Comment } from "../entity/Comment";
 
-// Cargar .env desde raíz del proyecto (cuatro niveles arriba de src/db_connection/config/)
-dotenv.config({ path: path.resolve(__dirname, '../../../../../.env') });
+// Cargar .env desde raíz del proyecto (Backend está dentro de Proyecto)
+const envPath = path.resolve(__dirname, '../../../../.env');
+console.log('🔍 Buscando .env en:', envPath);
+const envConfig = dotenv.config({ path: envPath });
+if (envConfig.error) {
+	console.warn('⚠️ Error cargando .env:', envConfig.error.message);
+} else {
+	console.log('✅ .env cargado correctamente');
+}
+console.log('📋 DB_HOST:', process.env.DB_HOST);
+console.log('📋 DB_USER:', process.env.DB_USER);
+console.log('📋 DB_NAME:', process.env.DB_NAME);
 
 export const appDataSource = new DataSource({
 	// Cambiado a MySQL para la migración. Asegúrate de tener instalado `mysql2`.
 	type: "mysql",
-	host: process.env.DB_HOST,
+	host: process.env.DB_HOST || 'localhost',
 	port: Number(process.env.DB_PORT) || 3306,
-	username: process.env.DB_USER,
-	password: process.env.DB_PASSWORD,
-	database: process.env.DB_NAME,
+	username: process.env.DB_USER || 'root',
+	password: process.env.DB_PASSWORD || '',
+	database: process.env.DB_NAME || 'Ghost_Running',
 	// Registrar todas las entidades para que TypeORM las conozca
 	entities: [
 		User,

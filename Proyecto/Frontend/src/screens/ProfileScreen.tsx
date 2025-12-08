@@ -1,5 +1,5 @@
 import React, { useCallback, useState } from 'react';
-import { View, Text, StyleSheet, Image, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Image, ScrollView, Modal, TouchableOpacity, TextInput, ActivityIndicator, Alert } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../config/commonStyles';
@@ -10,7 +10,7 @@ import { apiUrl } from '../config/api';
 import logo from '../../assets/logo.png';
 
 export default function ProfileScreen() {
-	const { user, logout } = useAuth();
+	const { user, logout, setUser } = useAuth();
 
 	const userName = user?.names || 'Runner';
 	const userEmail = user?.email || 'runner@ghostrunning.com';
@@ -18,6 +18,14 @@ export default function ProfileScreen() {
 	const [trainingsCount, setTrainingsCount] = useState<number>(0);
 	const [totalDistanceKm, setTotalDistanceKm] = useState<number>(0);
 	const [totalSeconds, setTotalSeconds] = useState<number>(0);
+
+	// Estado para modal de edición
+	const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+	const [isLoading, setIsLoading] = useState(false);
+	const [editedNames, setEditedNames] = useState(user?.names || '');
+	const [editedLastnames, setEditedLastnames] = useState(user?.lastNames || '');
+	const [editedDescription, setEditedDescription] = useState(user?.description || '');
+	const [editedAge, setEditedAge] = useState(user?.age?.toString() || '');
 
 	const parseDurationToSeconds = (dur: string | undefined | null) => {
 		if (!dur) {return 0;}
@@ -69,6 +77,59 @@ export default function ProfileScreen() {
 	const userImage = user?.profilePhoto
 		? apiUrl(`/images/${user.profilePhoto}`)
 		: apiUrl('/images/nouserimage.png');
+	const handleUpdateProfile = async () => {
+		if (!editedNames || !editedLastnames || !editedAge) {
+			Alert.alert('Error', 'Por favor completa todos los campos');
+			return;
+		}
+
+		setIsLoading(true);
+		try {
+			const response = await fetch(apiUrl(`/api/users/${encodeURIComponent(userEmail)}/profile`), {
+				method: 'PUT',
+				headers: {
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({
+					names: editedNames,
+					lastnames: editedLastnames,
+					description: editedDescription,
+					profilePhoto: user?.profilePhoto || '',
+					age: parseInt(editedAge)
+				})
+			});
+
+			if (!response.ok) {
+				const errorData = await response.json();
+				throw new Error(errorData.error || 'Error al actualizar perfil');
+			}
+
+			const result = await response.json();
+			// Actualizar contexto para reflejar cambios de inmediato en toda la app
+			if (result?.data) {
+				setUser(prev => ({
+					...prev,
+					email: result.data.email,
+					username: result.data.username,
+					names: result.data.names,
+					lastNames: result.data.lastNames,
+					description: result.data.description,
+					profilePhoto: result.data.profilePhoto,
+					age: result.data.age
+				} as any));
+			}
+
+			Alert.alert('✅ Éxito', 'Perfil actualizado correctamente');
+			setIsEditModalVisible(false);
+			// Recalcular stats para pantalla actual
+			loadProfileStats();
+		} catch (error) {
+			Alert.alert('❌ Error', error instanceof Error ? error.message : 'Error desconocido');
+		} finally {
+			setIsLoading(false);
+		}
+	};
+
 	return (
 		<SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
 			<View style={commonStyles.header}>
@@ -108,11 +169,78 @@ export default function ProfileScreen() {
 
 				{/* Action Buttons */}
 				<View style={styles.actionsSection}>
-					<GRButton label="✏️ Edit Profile" variant="secondary" style={styles.actionButtonSpacing} />
+					<GRButton label="✏️ Edit Profile" variant="secondary" style={styles.actionButtonSpacing} onPress={() => setIsEditModalVisible(true)} />
 					<GRButton label="⚙️ Settings" variant="secondary" style={styles.actionButtonSpacing} />
 					<GRButton label="🚪 Logout" variant="primary" onPress={logout} style={styles.actionButtonSpacing} />
 				</View>
 			</ScrollView>
+			{/* Modal de edición de perfil */}
+			<Modal visible={isEditModalVisible} animationType="slide" transparent={false}>
+				<SafeAreaView style={commonStyles.container}>
+					<View style={commonStyles.header}>
+						<Text style={commonStyles.headerText}>Edit Profile</Text>
+					</View>
+					<ScrollView style={styles.modalContent}>
+						<View style={styles.formSection}>
+							<Text style={styles.formLabel}>Nombres</Text>
+							<TextInput
+								style={styles.textInput}
+								value={editedNames}
+								onChangeText={setEditedNames}
+								placeholder="Tu nombre"
+								placeholderTextColor={theme.colors.textSecondary}
+							/>
+
+							<Text style={styles.formLabel}>Apellidos</Text>
+							<TextInput
+								style={styles.textInput}
+								value={editedLastnames}
+								onChangeText={setEditedLastnames}
+								placeholder="Tus apellidos"
+								placeholderTextColor={theme.colors.textSecondary}
+							/>
+
+							<Text style={styles.formLabel}>Edad</Text>
+							<TextInput
+								style={styles.textInput}
+								value={editedAge}
+								onChangeText={setEditedAge}
+								placeholder="Tu edad"
+								placeholderTextColor={theme.colors.textSecondary}
+								keyboardType="numeric"
+							/>
+
+							<Text style={styles.formLabel}>Descripción</Text>
+							<TextInput
+								style={[styles.textInput, styles.textAreaInput]}
+								value={editedDescription}
+								onChangeText={setEditedDescription}
+								placeholder="Cuéntanos sobre ti"
+								placeholderTextColor={theme.colors.textSecondary}
+								multiline={true}
+								numberOfLines={5}
+							/>
+						</View>
+
+						<View style={styles.formButtons}>
+							<GRButton
+								label={isLoading ? "Guardando..." : "💾 Guardar Cambios"}
+								variant="primary"
+								onPress={handleUpdateProfile}
+								disabled={isLoading}
+								style={styles.formButton}
+							/>
+							<GRButton
+								label="❌ Cancelar"
+								variant="secondary"
+								onPress={() => setIsEditModalVisible(false)}
+								disabled={isLoading}
+								style={styles.formButton}
+							/>
+						</View>
+					</ScrollView>
+				</SafeAreaView>
+			</Modal>
 		</SafeAreaView>
 	);
 }
@@ -167,6 +295,42 @@ const styles = StyleSheet.create({
 		paddingBottom: theme.spacing.xl
 	},
 	actionButtonSpacing: {
+		marginBottom: theme.spacing.s
+	},
+	modalContent: {
+		flex: 1,
+		paddingHorizontal: theme.spacing.l,
+		paddingVertical: theme.spacing.l
+	},
+	formSection: {
+		marginBottom: theme.spacing.xl
+	},
+	formLabel: {
+		fontSize: theme.typography.size.m,
+		fontWeight: '600',
+		color: theme.colors.textPrimary,
+		marginBottom: theme.spacing.xs,
+		marginTop: theme.spacing.m
+	},
+	textInput: {
+		borderWidth: 1,
+		borderColor: theme.colors.border || '#ddd',
+		borderRadius: theme.radii.m,
+		paddingHorizontal: theme.spacing.m,
+		paddingVertical: theme.spacing.m,
+		fontSize: theme.typography.size.m,
+		color: theme.colors.textPrimary,
+		backgroundColor: theme.colors.surface
+	},
+	textAreaInput: {
+		textAlignVertical: 'top',
+		paddingTop: theme.spacing.m
+	},
+	formButtons: {
+		marginTop: theme.spacing.xl,
+		marginBottom: theme.spacing.xl
+	},
+	formButton: {
 		marginBottom: theme.spacing.s
 	}
 });

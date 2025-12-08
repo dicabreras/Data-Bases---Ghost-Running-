@@ -5,8 +5,6 @@ import { User } from "../entity/User";
 import { Route } from "../entity/Route";
 import { Coordinate } from "../entity/Coordinate";
 import { calculateTrainingStats, calculatePace } from "../../services/trainingService";
-import * as fs from 'fs';
-import * as path from 'path';
 
 // Helper: parse HH:MM:SS or numeric seconds string to seconds
 function parseDurationStr(d?: string | number): number {
@@ -110,74 +108,17 @@ export const saveTraining = async (req: Request, res: Response) => {
 		});
 		await routeRepository.save(newRoute);
 
-		// Handle training image (base64) and save to disk if provided
-		let publicImageUrl: string | null = null;
-		try {
-			const rawImage = req.body.trainingImage;
-			const imageName = req.body.imageName;
-			if (rawImage && typeof rawImage === 'string') {
-				const matches = rawImage.match(/^data:(image\/(\w+));base64,(.+)$/);
-				let ext = 'png';
-				let base64Data = rawImage;
-				if (matches && matches.length === 4) {
-					ext = matches[2];
-					base64Data = matches[3];
-				} else if (rawImage.startsWith('data:')) {
-					// rawImage already contains data: prefix; strip header to obtain base64
-					const headerMatch = rawImage.match(/^data:(image\/(\w+));base64,(.+)$/);
-					if (headerMatch && headerMatch.length === 4) {
-						ext = headerMatch[2];
-						base64Data = headerMatch[3];
-					} else {
-						// fallback: try to remove until first comma
-						const idx = rawImage.indexOf(',');
-						base64Data = idx >= 0 ? rawImage.slice(idx + 1) : rawImage;
-					}
-				} else {
-					// rawImage may already be raw base64 without data URL
-					// keep base64Data as-is (initialized to rawImage)
-				}
-
-				let fileBase = (imageName && typeof imageName === 'string' && imageName.trim().length > 0) ? imageName.trim() : `training_${Date.now()}`;
-				// sanitize
-				fileBase = fileBase.replace(/[^a-zA-Z0-9-_]/g, '_');
-				let fileName = `${fileBase}.${ext}`;
-				const imagesDir = path.join(__dirname, '../../../../Database/db_images');
-				await fs.promises.mkdir(imagesDir, { recursive: true });
-				let filePath = path.join(imagesDir, fileName);
-				if (fs.existsSync(filePath)) {
-					fileName = `${fileBase}_${Date.now()}.${ext}`;
-					filePath = path.join(imagesDir, fileName);
-				}
-				await fs.promises.writeFile(filePath, base64Data, 'base64');
-				publicImageUrl = `/images/${fileName}`;
-			}
-		} catch (err) {
-			console.error('Error saving training image:', err);
-			publicImageUrl = null;
-		}
-		// Handle name uniqueness: if a name was provided, ensure it is unique per user
-		const providedName = name && typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
-		if (providedName) {
-			const existing = await trainingRepository.findOne({ where: { userEmail: userEmail, name: providedName }});
-			if (existing) {
-				return res.status(409).json({ error: 'A training with that name already exists' });
-			}
-		}
-
 		// Crear entrenamiento
 		const training = trainingRepository.create({
 			userEmail: userEmail,
 			routeId: newRoute.id,
 			datetime: datetime ? new Date(datetime) : new Date(),
-			name: providedName ?? undefined,
 			duration: duration || "00:00:00",
 			rithm: rithm || 0,
 			maxSpeed: maxSpeed || avgSpeed || 0,
 			avgSpeed: avgSpeed || 0,
 			calories: calories || 0,
 			elevationGain: elevationGain || 0,
-			image: publicImageUrl ?? undefined,
 			trainingType: trainingType || 'Running',
 			isGhost: isGhost ? 1 : 0,
 			user: user,
@@ -186,10 +127,25 @@ export const saveTraining = async (req: Request, res: Response) => {
 
 		await trainingRepository.save(training);
 
-		// If no name was provided, set a default name based on the training counter and persist it
-		if (!training.name) {
-			training.name = `Training #${training.counter}`;
-			await trainingRepository.save(training);
+		// Publicar automáticamente el entrenamiento al finalizar (solo si no es ghost)
+		let publicationCreated = false;
+		if (!isGhost) {
+			try {
+				await appDataSource.query(
+					'CALL sp_user_publish_training_with_comment(?, ?, ?, ?, ?, ?)',
+					[
+						userEmail,
+						training.counter,
+						newRoute.id,
+						null, // pub_routeimage (no se envía imagen por ahora)
+						1,    // pub_privacity: 1 = público
+						''    // com_Text: comentario inicial vacío
+					]
+				);
+				publicationCreated = true;
+			} catch (err) {
+				console.error('Error publishing training via stored procedure:', err);
+			}
 		}
 
 		return res.status(201).json({
@@ -197,7 +153,6 @@ export const saveTraining = async (req: Request, res: Response) => {
 			training: {
 				counter: training.counter,
 				distance: newRoute.distance,
-				name: training.name || null,
 				duration: training.duration,
 				avgSpeed: training.avgSpeed,
 				maxSpeed: training.maxSpeed,
@@ -207,9 +162,9 @@ export const saveTraining = async (req: Request, res: Response) => {
 				trainingType: training.trainingType,
 				datetime: training.datetime,
 				isGhost: training.isGhost,
-				route: savedCoordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude, altitude: c.altitude })),
-				image: training.image || null
-			}
+				route: savedCoordinates.map(c => ({ latitude: c.latitude, longitude: c.longitude, altitude: c.altitude }))
+			},
+			publicationCreated
 		});
 	} catch (error) {
 		console.error("Error saving training:", error);
@@ -236,7 +191,6 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 			trainings: trainings.map(t => ({
 				counter: t.counter,
 				distance: parseFloat(t.route.distance.toString()),
-				name: t.name || null,
 				duration: t.duration,
 				avgSpeed: parseFloat(t.avgSpeed.toString()),
 				maxSpeed: parseFloat(t.maxSpeed.toString()),
@@ -250,8 +204,7 @@ export const getUserTrainings = async (req: Request, res: Response) => {
 					latitude: parseFloat(c.latitude.toString()),
 					longitude: parseFloat(c.longitude.toString()),
 					altitude: parseFloat(c.altitude.toString())
-				})),
-				image: t.image || null
+				}))
 			}))
 		});
 	} catch (error) {
@@ -302,15 +255,6 @@ export const replaceGhost = async (req: Request, res: Response) => {
 			return res.status(400).json({ error: 'Distance too short: must be more than 10 meters' });
 		}
 
-		// If a name was provided for the new ghost, ensure uniqueness per user
-		const providedName = name && typeof name === 'string' && name.trim().length > 0 ? name.trim() : null;
-		if (providedName) {
-			const existing = await trainingRepository.findOne({ where: { userEmail: userEmail, name: providedName }});
-			if (existing) {
-				return res.status(409).json({ error: 'A training with that name already exists' });
-			}
-		}
-
 		// Create coordinates
 		const savedCoordinates: Coordinate[] = [];
 		if (route && Array.isArray(route)) {
@@ -345,18 +289,11 @@ export const replaceGhost = async (req: Request, res: Response) => {
 			elevationGain: elevationGain || 0,
 			trainingType: trainingType || 'Running',
 			isGhost: 1,
-			name: providedName ?? undefined,
 			user: user,
 			route: newRoute
 		});
 
 		await trainingRepository.save(newGhost);
-
-		// If no name was provided, set a default name based on the counter
-		if (!newGhost.name) {
-			newGhost.name = `Training #${newGhost.counter}`;
-			await trainingRepository.save(newGhost);
-		}
 
 		return res.status(201).json({
 			message: "Ghost replaced successfully",
@@ -390,21 +327,6 @@ export const deleteTraining = async (req: Request, res: Response) => {
 		const training = await trainingRepository.findOne({ where: { counter: Number(counter) }, relations: ['route'] });
 		if (!training) {
 			return res.status(404).json({ error: 'Training not found' });
-		}
-
-		// Delete image file if it's a public image path
-		try {
-			const img = training.image;
-			if (img && typeof img === 'string' && img.startsWith('/images/')) {
-				const fileName = img.replace('/images/', '');
-				const imagesDir = path.join(__dirname, '../../../../Database/db_images');
-				const filePath = path.join(imagesDir, fileName);
-				if (fs.existsSync(filePath)) {
-					await fs.promises.unlink(filePath);
-				}
-			}
-		} catch (err) {
-			console.warn('Failed to remove training image file:', err);
 		}
 
 		// Remove the training record

@@ -31,20 +31,26 @@ export async function createDbUserViaStoredProc(appUsername: string, role: 'admi
     }
     let conn;
     try {
-        conn = await mysql.createConnection({ host: HOST, port: PORT, user: ADMIN_USER, password: ADMIN_PASS });
+        conn = await mysql.createConnection({ host: HOST, port: PORT, user: ADMIN_USER, password: ADMIN_PASS, database: DB_NAME });
 
-        // Call the stored procedure only. No JS fallback — if the PA fails, log and return null.
+        // Call the stored procedure only. No JS fallback  if the PA fails, log and return null.
         try {
             const procName = role === 'admin' ? 'sp_create_db_admin_app' : 'sp_create_db_user_app';
-            const callSql = `CALL ${procName}(?, ?)`;
-            const [rows] = await conn.query(callSql, [appUsername, password]);
+            // Cannot use ? placeholders with stored procs that use PREPARE internally; escape manually
+            const escapedUsername = conn.escape(appUsername);
+            const escapedPassword = conn.escape(password);
+            const callSql = `CALL ${procName}(${escapedUsername}, ${escapedPassword})`;
+            const [rows] = await conn.query(callSql);
             let createdUsername: string | undefined;
             if (Array.isArray(rows) && rows.length > 0) {
-                const first = rows[0];
-                if (Array.isArray(first) && first.length > 0 && first[0].created_db_username) {
-                    createdUsername = first[0].created_db_username as string;
-                } else if (first.created_db_username) {
-                    createdUsername = (first.created_db_username as string);
+                const first = rows[0] as Record<string, unknown>;
+                if (Array.isArray(first) && first.length > 0) {
+                    const firstItem = first[0] as Record<string, unknown>;
+                    if (firstItem && typeof firstItem.created_db_username === 'string') {
+                        createdUsername = firstItem.created_db_username;
+                    }
+                } else if (typeof first.created_db_username === 'string') {
+                    createdUsername = first.created_db_username;
                 }
             }
             return createdUsername ? { dbUsername: createdUsername, dbPassword: password } : null;
@@ -55,6 +61,44 @@ export async function createDbUserViaStoredProc(appUsername: string, role: 'admi
     } catch (err) {
         console.error('Failed to create DB user via stored proc or fallback:', err);
         return null;
+    } finally {
+        if (conn) await conn.end();
+    }
+}
+
+/**
+ * Actualiza el perfil de un usuario llamando al procedimiento almacenado sp_user_update_profile.
+ * Este procedimiento actualiza nombres, apellidos, descripción, foto de perfil y edad.
+ */
+export async function updateUserProfileViaStoredProc(
+    userEmail: string,
+    names: string,
+    lastnames: string,
+    description: string,
+    profilePhoto: string,
+    age: number
+) {
+    if (!ADMIN_USER || !ADMIN_PASS) {
+        console.warn('DB admin credentials not provided; skipping profile update');
+        return { success: false, error: 'Database credentials not configured' };
+    }
+    let conn;
+    try {
+        conn = await mysql.createConnection({ 
+            host: HOST, 
+            port: PORT, 
+            user: ADMIN_USER, 
+            password: ADMIN_PASS, 
+            database: DB_NAME 
+        });
+
+        const callSql = `CALL sp_user_update_profile(?, ?, ?, ?, ?, ?)`;
+        await conn.query(callSql, [userEmail, names, lastnames, description, profilePhoto, age]);
+        
+        return { success: true };
+    } catch (err) {
+        console.error('Error calling sp_user_update_profile:', err);
+        return { success: false, error: err instanceof Error ? err.message : 'Unknown error' };
     } finally {
         if (conn) await conn.end();
     }
