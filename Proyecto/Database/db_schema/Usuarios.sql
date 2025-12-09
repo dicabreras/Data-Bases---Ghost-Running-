@@ -3,6 +3,26 @@ USE Ghost_Running;
 
 --  USUARIO ADMINISTRADOR
 
+-- Perfil de aplicación para el admin (solo consulta de vistas)
+INSERT INTO UserGR (
+    user_Email,
+    user_Username,
+    user_Password,
+    user_Names,
+    user_LastNames,
+    user_Age,
+    user_RegistrationDate
+) VALUES (
+    'admin@runner.com',
+    'admin',
+    '$2b$10$RtAyaa4hJU0lUxC6VXIf9.xaC.9fSM9Kz43CzjRTrJYJOLD591E7C', -- bcrypt de "Admin123"
+    'Admin',
+    'Runner',
+    35,
+    NOW()
+)
+ON DUPLICATE KEY UPDATE user_Email = user_Email;
+
 DROP USER IF EXISTS 'admin_ghost'@'%';
 CREATE USER 'admin_ghost'@'%' IDENTIFIED BY 'Admin123';
 

@@ -5,6 +5,9 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { commonStyles } from '../config/commonStyles';
 import { theme } from '../config/designSystem';
 import GRButton from '../components/GRButton';
+import FollowersListModal from '../components/FollowersListModal';
+import PhysicalStateModal from '../components/PhysicalStateModal';
+import OtherUserProfileScreen from './OtherUserProfileScreen';
 import { useAuth } from '../context/AuthContext';
 import { apiUrl } from '../config/api';
 import logo from '../../assets/logo.png';
@@ -18,9 +21,19 @@ export default function ProfileScreen() {
 	const [trainingsCount, setTrainingsCount] = useState<number>(0);
 	const [totalDistanceKm, setTotalDistanceKm] = useState<number>(0);
 	const [totalSeconds, setTotalSeconds] = useState<number>(0);
+	const [followersCount, setFollowersCount] = useState<number>(0);
+	const [followingCount, setFollowingCount] = useState<number>(0);
 
-	// Estado para modal de edición
+	// Modals
 	const [isEditModalVisible, setIsEditModalVisible] = useState(false);
+	const [isFollowersModalVisible, setIsFollowersModalVisible] = useState(false);
+	const [isFollowingModalVisible, setIsFollowingModalVisible] = useState(false);
+	const [selectedUserProfile, setSelectedUserProfile] = useState<string | null>(null);
+	const [followersListType, setFollowersListType] = useState<'followers' | 'following'>('followers');
+	const [isPhysicalStateModalVisible, setIsPhysicalStateModalVisible] = useState(false);
+	const [currentPhysicalState, setCurrentPhysicalState] = useState<{ date: string; height: number; weight: number } | null>(null);
+
+	// Edit state
 	const [isLoading, setIsLoading] = useState(false);
 	const [editedNames, setEditedNames] = useState(user?.names || '');
 	const [editedLastnames, setEditedLastnames] = useState(user?.lastNames || '');
@@ -52,31 +65,66 @@ export default function ProfileScreen() {
 		if (!userEmail) {return;}
 		try {
 			const resp = await fetch(apiUrl(`/api/trainings/${encodeURIComponent(userEmail)}`));
-			if (!resp.ok) {return;}
-			const data = await resp.json();
-			const items = data.trainings || [];
-			setTrainingsCount(items.length);
-			let dist = 0;
-			let secs = 0;
-			for (const it of items) {
-				dist += Number(it.distance) || 0;
-				secs += parseDurationToSeconds(it.duration);
+			if (resp.ok) {
+				const data = await resp.json();
+				const items = data.trainings || [];
+				setTrainingsCount(items.length);
+				let dist = 0;
+				let secs = 0;
+				for (const it of items) {
+					dist += Number(it.distance) || 0;
+					secs += parseDurationToSeconds(it.duration);
+				}
+				setTotalDistanceKm(dist);
+				setTotalSeconds(secs);
 			}
-			setTotalDistanceKm(dist);
-			setTotalSeconds(secs);
 		} catch (err) {
-			console.warn('Error loading profile stats', err);
+			console.warn('Error loading training stats', err);
+		}
+
+		// Always attempt to refresh follow stats, even if trainings fail
+		try {
+			const followResp = await fetch(apiUrl(`/api/users/${encodeURIComponent(userEmail)}/follow-stats`));
+			if (followResp.ok) {
+				const followData = await followResp.json();
+				setFollowersCount(followData.followerCount || 0);
+				setFollowingCount(followData.followingCount || 0);
+			}
+		} catch (err) {
+			console.warn('Error loading follow stats', err);
+		}
+	}, [userEmail]);
+
+	const loadCurrentPhysicalState = useCallback(async () => {
+		if (!userEmail) return;
+		try {
+			const resp = await fetch(apiUrl(`/api/physical-state/${encodeURIComponent(userEmail)}/current`));
+			if (resp.ok) {
+				const data = await resp.json();
+				if (data.hasPhysicalState) {
+					setCurrentPhysicalState(data.physicalState);
+				}
+			}
+		} catch (err) {
+			console.warn('Error loading physical state:', err);
 		}
 	}, [userEmail]);
 
 	useFocusEffect(
 		useCallback(() => {
 			loadProfileStats();
-		}, [loadProfileStats])
+			loadCurrentPhysicalState();
+		}, [loadProfileStats, loadCurrentPhysicalState])
 	);
 	const userImage = user?.profilePhoto
 		? apiUrl(`/images/${user.profilePhoto}`)
 		: apiUrl('/images/nouserimage.png');
+
+	// Handle user profile view
+	const handleUserProfilePress = (userProfileEmail: string) => {
+		setSelectedUserProfile(userProfileEmail);
+	};
+
 	const handleUpdateProfile = async () => {
 		if (!editedNames || !editedLastnames || !editedAge) {
 			Alert.alert('Error', 'Por favor completa todos los campos');
@@ -136,46 +184,122 @@ export default function ProfileScreen() {
 				<Text style={commonStyles.headerText}>Profile</Text>
 			</View>
 
-			<ScrollView style={styles.content}>
-				{/* Profile Image and Info */}
-				<View style={styles.profileSection}>
-					<View style={[commonStyles.profileImageContainer, styles.largeProfileImage]}>
-						<Image
-							source={{ uri: userImage }}
-							style={commonStyles.profileImage}
-							defaultSource={logo}
-						/>
+			{selectedUserProfile ? (
+				<OtherUserProfileScreen
+					userEmail={selectedUserProfile}
+					currentUserEmail={userEmail}
+					onGoBack={() => {
+						setSelectedUserProfile(null);
+						loadProfileStats(); // Refresh stats when returning
+					}}
+				/>
+			) : (
+				<ScrollView style={styles.content}>
+					{/* Profile Image and Info */}
+					<View style={styles.profileSection}>
+						<View style={[commonStyles.profileImageContainer, styles.largeProfileImage]}>
+							<Image
+								source={{ uri: userImage }}
+								style={commonStyles.profileImage}
+								defaultSource={logo}
+							/>
+						</View>
+
+						<Text style={styles.userName}>{userName}</Text>
+						<Text style={styles.userEmail}>{userEmail}</Text>
 					</View>
 
-					<Text style={styles.userName}>{userName}</Text>
-					<Text style={styles.userEmail}>{userEmail}</Text>
-				</View>
+					{/* Follow Stats - NEW */}
+					<View style={styles.followStatsContainer}>
+						<TouchableOpacity
+							style={styles.followStatCard}
+							onPress={() => {
+								setFollowersListType('followers');
+								setIsFollowersModalVisible(true);
+							}}
+						>
+							<Text style={styles.followStatValue}>{followersCount}</Text>
+							<Text style={styles.followStatLabel}>Followers</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							style={styles.followStatCard}
+							onPress={() => {
+								setFollowersListType('following');
+								setIsFollowingModalVisible(true);
+							}}
+						>
+							<Text style={styles.followStatValue}>{followingCount}</Text>
+							<Text style={styles.followStatLabel}>Following</Text>
+						</TouchableOpacity>
+					</View>
 
-				{/* Stats Section */}
-				<View style={styles.statsSection}>
-					<View style={styles.statCard}>
-						<Text style={styles.statValue}>{trainingsCount}</Text>
-						<Text style={styles.statLabel}>Trainings</Text>
+					{/* Stats Section */}
+					<View style={styles.statsSection}>
+						<View style={styles.statCard}>
+							<Text style={styles.statValue}>{trainingsCount}</Text>
+							<Text style={styles.statLabel}>Trainings</Text>
+						</View>
+						<View style={styles.statCard}>
+							<Text style={styles.statValue}>{totalDistanceKm.toFixed(2)} km</Text>
+							<Text style={styles.statLabel}>Distance</Text>
+						</View>
+						<View style={styles.statCard}>
+							<Text style={styles.statValue}>{formatSecondsToHrs(totalSeconds)}</Text>
+							<Text style={styles.statLabel}>Time</Text>
+						</View>
 					</View>
-					<View style={styles.statCard}>
-						<Text style={styles.statValue}>{totalDistanceKm.toFixed(2)} km</Text>
-						<Text style={styles.statLabel}>Distance</Text>
-					</View>
-					<View style={styles.statCard}>
-						<Text style={styles.statValue}>{formatSecondsToHrs(totalSeconds)}</Text>
-						<Text style={styles.statLabel}>Time</Text>
-					</View>
-				</View>
 
 				{/* Action Buttons */}
 				<View style={styles.actionsSection}>
+					<GRButton label="💪 Physical State" variant="secondary" style={styles.actionButtonSpacing} onPress={() => setIsPhysicalStateModalVisible(true)} />
 					<GRButton label="✏️ Edit Profile" variant="secondary" style={styles.actionButtonSpacing} onPress={() => setIsEditModalVisible(true)} />
 					<GRButton label="⚙️ Settings" variant="secondary" style={styles.actionButtonSpacing} />
 					<GRButton label="🚪 Logout" variant="primary" onPress={logout} style={styles.actionButtonSpacing} />
 				</View>
-			</ScrollView>
-			{/* Modal de edición de perfil */}
-			<Modal visible={isEditModalVisible} animationType="slide" transparent={false}>
+				</ScrollView>
+			)}
+
+			{/* Followers Modal */}
+			<FollowersListModal
+				visible={isFollowersModalVisible}
+				onClose={() => {
+					setIsFollowersModalVisible(false);
+					loadProfileStats(); // Refresh stats when modal closes
+				}}
+				currentUserEmail={userEmail}
+				type="followers"
+				onUserPress={(email) => {
+					setIsFollowersModalVisible(false);
+					handleUserProfilePress(email);
+				}}
+			/>
+
+			{/* Following Modal */}
+			<FollowersListModal
+				visible={isFollowingModalVisible}
+				onClose={() => {
+					setIsFollowingModalVisible(false);
+					loadProfileStats(); // Refresh stats when modal closes
+				}}
+				currentUserEmail={userEmail}
+				type="following"
+				onUserPress={(email) => {
+					setIsFollowingModalVisible(false);
+					handleUserProfilePress(email);
+				}}
+			/>
+
+		{/* Physical State Modal */}
+		<PhysicalStateModal
+			visible={isPhysicalStateModalVisible}
+			onClose={() => setIsPhysicalStateModalVisible(false)}
+			userEmail={userEmail}
+			onSuccess={() => loadCurrentPhysicalState()}
+			currentPhysicalState={currentPhysicalState}
+		/>
+
+		{/* Modal de edición de perfil */}
+		<Modal visible={isEditModalVisible} animationType="slide" transparent={false}>
 				<SafeAreaView style={commonStyles.container}>
 					<View style={commonStyles.header}>
 						<Text style={commonStyles.headerText}>Edit Profile</Text>
@@ -266,6 +390,30 @@ const styles = StyleSheet.create({
 	userEmail: {
 		color: theme.colors.textSecondary,
 		fontSize: theme.typography.size.m
+	},
+	followStatsContainer: {
+		flexDirection: 'row',
+		paddingHorizontal: theme.spacing.l,
+		marginBottom: theme.spacing.l,
+		gap: theme.spacing.m
+	},
+	followStatCard: {
+		flex: 1,
+		backgroundColor: theme.colors.surface,
+		borderRadius: theme.radii.m,
+		paddingVertical: theme.spacing.m,
+		paddingHorizontal: theme.spacing.s,
+		alignItems: 'center'
+	},
+	followStatValue: {
+		color: theme.colors.primary,
+		fontSize: theme.typography.size.l,
+		fontWeight: '700',
+		marginBottom: theme.spacing.xs
+	},
+	followStatLabel: {
+		color: theme.colors.textSecondary,
+		fontSize: theme.typography.size.s
 	},
 	statsSection: {
 		flexDirection: 'row',

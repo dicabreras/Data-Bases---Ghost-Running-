@@ -241,6 +241,42 @@ export const updateUserProfile = async (req: Request, res: Response) => {
 };
 
 
+/**
+ * Get another user's profile information
+ * GET /api/users/:email/profile
+ */
+export const getOtherUserProfile = async (req: Request, res: Response) => {
+	const userRepository = Database.getInstance().getRepository(User);
+	try {
+		const { email } = req.params;
+		
+		const user = await userRepository.findOne({
+			where: { email },
+			select: ['email', 'username', 'names', 'lastNames', 'age', 'profilePhoto', 'description', 'followersCount', 'followingCount']
+		});
+
+		if (!user) {
+			return res.status(404).json({ error: 'User not found' });
+		}
+
+		return res.json({
+			email: user.email,
+			username: user.username,
+			names: user.names,
+			lastNames: user.lastNames,
+			age: user.age,
+			profilePhoto: user.profilePhoto,
+			description: user.description,
+			followersCount: user.followersCount || 0,
+			followingCount: user.followingCount || 0
+		});
+	} catch (error) {
+		console.error('Error fetching user profile:', error);
+		return res.status(500).json({ error: 'Failed to fetch user profile' });
+	}
+};
+
+
 export const getFirstUser = async (req: Request, res: Response) => {
 	const userRepository = Database.getInstance().getRepository(User);
 	try {

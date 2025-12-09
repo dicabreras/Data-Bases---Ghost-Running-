@@ -21,6 +21,7 @@ type TrainingItem = {
     trainingType: string;
     datetime: string;
     isGhost: number;
+    isPublished?: boolean;
     route: Array<{ latitude: number; longitude: number; altitude?: number }> | null;
     image?: string | null;
 };
@@ -126,6 +127,44 @@ export default function HistoryScreen() {
 	const hasMore = pagedTrainings.length < sortedTrainings.length;
 	const [loadingMore, setLoadingMore] = useState(false);
 
+	const handleTogglePublish = async (training: TrainingItem) => {
+		if (!user?.email) return;
+
+		try {
+			if (training.isPublished) {
+				// Despublicar
+				const resp = await fetch(apiUrl('/api/publications/unpublish'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userEmail: user.email, trainingCounter: training.counter })
+				});
+
+				if (resp.ok) {
+					// Actualizar el estado local
+					setTrainings(prev => prev.map(t => 
+						t.counter === training.counter ? { ...t, isPublished: false } : t
+					));
+				}
+			} else {
+				// Publicar
+				const resp = await fetch(apiUrl('/api/publications/publish'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userEmail: user.email, trainingCounter: training.counter })
+				});
+
+				if (resp.ok) {
+					// Actualizar el estado local
+					setTrainings(prev => prev.map(t => 
+						t.counter === training.counter ? { ...t, isPublished: true } : t
+					));
+				}
+			}
+		} catch (err) {
+			console.warn('Error toggling publication:', err);
+		}
+	};
+
 
 	if (!user?.email) {
 		return (
@@ -203,13 +242,26 @@ export default function HistoryScreen() {
 						keyExtractor={(item) => item.counter.toString()}
 						contentContainerStyle={{ padding: theme.spacing.l }}
 						renderItem={({ item }) => (
-							<TouchableOpacity style={styles.card} onPress={() => (navigation as any).navigate('TrainingDetail', { training: item })}>
-								<Image source={{ uri: resolveImageUri(item.image) || apiUrl('/images/nouserimage.png') }} style={styles.thumb} />
-								<View style={styles.cardContent}>
-									<Text style={styles.title}>{item.name || `Training #${item.counter}`}</Text>
-									<Text style={styles.subtitle}>{`${item.distance?.toFixed(2) || 0} km • ${item.duration}`}</Text>
-								</View>
-							</TouchableOpacity>
+							<View style={styles.card}>
+								<TouchableOpacity 
+									style={styles.cardTouchable} 
+									onPress={() => (navigation as any).navigate('TrainingDetail', { training: item })}
+								>
+									<Image source={{ uri: resolveImageUri(item.image) || apiUrl('/images/nouserimage.png') }} style={styles.thumb} />
+									<View style={styles.cardContent}>
+										<Text style={styles.title}>{item.name || `Training #${item.counter}`}</Text>
+										<Text style={styles.subtitle}>{`${item.distance?.toFixed(2) || 0} km • ${item.duration}`}</Text>
+									</View>
+								</TouchableOpacity>
+								<TouchableOpacity 
+									style={[styles.publishButton, item.isPublished && styles.publishButtonActive]} 
+									onPress={() => handleTogglePublish(item)}
+								>
+									<Text style={styles.publishButtonText}>
+										{item.isPublished ? '✓ Published' : '📤 Publish'}
+									</Text>
+								</TouchableOpacity>
+							</View>
 						)}
 						ListEmptyComponent={() => (
 							<View style={styles.empty}><Text style={styles.emptyText}>No trainings yet.</Text></View>
@@ -232,11 +284,35 @@ export default function HistoryScreen() {
 
 const styles = StyleSheet.create({
 	loading: { flex: 1, justifyContent: 'center', alignItems: 'center' },
-	card: { flexDirection: 'row', backgroundColor: theme.colors.surface, borderRadius: theme.radii.m, overflow: 'hidden', marginBottom: theme.spacing.m },
+	card: { 
+		backgroundColor: theme.colors.surface, 
+		borderRadius: theme.radii.m, 
+		overflow: 'hidden', 
+		marginBottom: theme.spacing.m 
+	},
+	cardTouchable: { 
+		flexDirection: 'row' 
+	},
 	thumb: { width: 110, height: 80, backgroundColor: '#eee' },
 	cardContent: { padding: theme.spacing.s, flex: 1, justifyContent: 'center' },
 	title: { fontSize: 16, fontWeight: '700', color: theme.colors.textPrimary },
 	subtitle: { fontSize: 13, color: theme.colors.textSecondary, marginTop: 4 },
+	publishButton: {
+		paddingVertical: theme.spacing.s,
+		paddingHorizontal: theme.spacing.m,
+		backgroundColor: theme.colors.primary,
+		alignItems: 'center',
+		borderBottomLeftRadius: theme.radii.m,
+		borderBottomRightRadius: theme.radii.m,
+	},
+	publishButtonActive: {
+		backgroundColor: theme.colors.success || '#4CAF50',
+	},
+	publishButtonText: {
+		color: '#fff',
+		fontWeight: '600',
+		fontSize: 14,
+	},
 	empty: { padding: theme.spacing.l, alignItems: 'center' },
 	emptyText: { color: theme.colors.textSecondary },
 	controls: { flexDirection: 'row', paddingHorizontal: theme.spacing.l, paddingBottom: theme.spacing.s, justifyContent: 'flex-start', gap: theme.spacing.s },

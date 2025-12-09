@@ -6,13 +6,17 @@ import { useNavigation } from '@react-navigation/native';
 import { theme } from '../config/designSystem';
 import { commonStyles } from '../config/commonStyles';
 import { apiUrl } from '../config/api';
+import { useAuth } from '../context/AuthContext';
 
 export default function TrainingDetailScreen() {
 	const route = useRoute();
 	const { training } = (route.params as any) || {};
 
 	const navigation = useNavigation();
+	const { user } = useAuth();
 	const [deleting, setDeleting] = useState(false);
+	const [publishing, setPublishing] = useState(false);
+	const [isPublished, setIsPublished] = useState(training?.isPublished || false);
 
 	if (!training) {
 		return (
@@ -49,6 +53,50 @@ export default function TrainingDetailScreen() {
 		{ key: 'trainingType', label: 'Type', value: String(training.trainingType ?? '') }
 	];
 
+	const handleTogglePublish = async () => {
+		if (!user?.email || publishing) return;
+
+		try {
+			setPublishing(true);
+
+			if (isPublished) {
+				// Despublicar
+				const resp = await fetch(apiUrl('/api/publications/unpublish'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userEmail: user.email, trainingCounter: training.counter })
+				});
+
+				if (resp.ok) {
+					setIsPublished(false);
+					Alert.alert('Unpublished', 'Training removed from feed');
+				} else {
+					Alert.alert('Error', 'Failed to unpublish training');
+				}
+			} else {
+				// Publicar
+				const resp = await fetch(apiUrl('/api/publications/publish'), {
+					method: 'POST',
+					headers: { 'Content-Type': 'application/json' },
+					body: JSON.stringify({ userEmail: user.email, trainingCounter: training.counter })
+				});
+
+				if (resp.ok) {
+					setIsPublished(true);
+					Alert.alert('Published', 'Training published to feed');
+				} else {
+					const error = await resp.json();
+					Alert.alert('Error', error.error || 'Failed to publish training');
+				}
+			}
+		} catch (err) {
+			console.warn('Error toggling publication:', err);
+			Alert.alert('Error', 'Failed to update publication status');
+		} finally {
+			setPublishing(false);
+		}
+	};
+
 	return (
 		<SafeAreaView style={commonStyles.container}>
 			<ScrollView>
@@ -70,6 +118,20 @@ export default function TrainingDetailScreen() {
 				</View>
 
 				<View style={styles.actionsWrap}>
+					<TouchableOpacity
+						style={[styles.publishButton, isPublished && styles.publishButtonActive]}
+						onPress={handleTogglePublish}
+						disabled={publishing}
+					>
+						{publishing ? (
+							<ActivityIndicator size="small" color="#fff" />
+						) : (
+							<Text style={styles.publishButtonText}>
+								{isPublished ? '✓ Published to Feed' : '📤 Publish to Feed'}
+							</Text>
+						)}
+					</TouchableOpacity>
+
 					{deleting ? (
 						<ActivityIndicator size="small" color={theme.colors.primary} />
 					) : (
@@ -130,7 +192,23 @@ const styles = StyleSheet.create({
 	statCard: { width: '48%', backgroundColor: theme.colors.background, padding: theme.spacing.m, borderRadius: theme.radii.m, marginBottom: theme.spacing.s },
 	statLabel: { color: theme.colors.textSecondary, fontSize: 12 },
 	statValue: { color: theme.colors.textPrimary, fontSize: 16, fontWeight: '700', marginTop: 6 },
-	actionsWrap: { margin: theme.spacing.l, alignItems: 'center' },
-	deleteButton: { backgroundColor: '#D9534F', paddingHorizontal: theme.spacing.l, paddingVertical: theme.spacing.s, borderRadius: theme.radii.m },
+	actionsWrap: { margin: theme.spacing.l, alignItems: 'center', gap: theme.spacing.m },
+	publishButton: {
+		backgroundColor: theme.colors.primary,
+		paddingHorizontal: theme.spacing.l,
+		paddingVertical: theme.spacing.m,
+		borderRadius: theme.radii.m,
+		width: '100%',
+		alignItems: 'center',
+	},
+	publishButtonActive: {
+		backgroundColor: theme.colors.success || '#4CAF50',
+	},
+	publishButtonText: {
+		color: '#fff',
+		fontWeight: '700',
+		fontSize: 16,
+	},
+	deleteButton: { backgroundColor: '#D9534F', paddingHorizontal: theme.spacing.l, paddingVertical: theme.spacing.s, borderRadius: theme.radii.m, width: '100%', alignItems: 'center' },
 	deleteButtonText: { color: '#fff', fontWeight: '700' }
 });

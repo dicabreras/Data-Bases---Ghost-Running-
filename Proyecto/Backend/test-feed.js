@@ -1,24 +1,23 @@
-import { Request, Response } from "express";
-import { appDataSource } from "../config/dataSource";
+const mysql = require('mysql2/promise');
 
-/**
- * Devuelve el feed del usuario: publicaciones propias y de seguidos.
- * Incluye datos del usuario, entrenamiento y ruta asociados.
- */
-export const getUserFeed = async (req: Request, res: Response) => {
+async function testFeed() {
+  const connection = await mysql.createConnection({
+    host: 'localhost',
+    user: 'root',
+    password: 'Werkzeuge_2357',
+    database: 'Ghost_Running'
+  });
+
   try {
-    const { userEmail } = req.params;
-    if (!userEmail) {
-      return res.status(400).json({ error: "userEmail is required" });
-    }
-
+    console.log('🔍 Probando feed para Diego...\n');
+    
+    const userEmail = 'diegoGo@runner.com';
     const sql = `
       SELECT 
         p.pub_Counter       AS publicationId,
         p.user_Email        AS authorEmail,
         u.user_Username     AS authorUsername,
         CONCAT(u.user_Names, ' ', u.user_LastNames) AS authorName,
-        u.user_ProfilePhoto AS authorPhoto,
         p.pub_RouteImage    AS routeImage,
         p.pub_Privacity     AS privacy,
         p.pub_Datetime      AS datetime,
@@ -50,11 +49,22 @@ export const getUserFeed = async (req: Request, res: Response) => {
       LIMIT 100;
     `;
 
-    const feed = await appDataSource.query(sql, [userEmail, userEmail]);
+    const [feed] = await connection.query(sql, [userEmail, userEmail]);
 
-    return res.status(200).json({ feed });
+    console.log(`📊 Feed items encontrados: ${feed.length}`);
+    console.log('\n📋 Detalles del feed:');
+    feed.forEach(item => {
+      console.log(`  - ${item.authorUsername} (${item.authorEmail}): Entrenamiento #${item.trainingCounter}, ${item.routeDistance}km`);
+    });
+
+    console.log('\n✅ Feed completo:');
+    console.log(JSON.stringify(feed, null, 2));
+
   } catch (error) {
-    console.error("Error fetching feed:", error);
-    return res.status(500).json({ error: "Error fetching feed" });
+    console.error('❌ Error:', error);
+  } finally {
+    await connection.end();
   }
-};
+}
+
+testFeed();

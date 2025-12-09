@@ -7,6 +7,8 @@ import { apiUrl } from '../config/api';
 import { useAuth } from '../context/AuthContext';
 import { useFocusEffect } from '@react-navigation/native';
 import GRButton from '../components/GRButton';
+import FollowButton from '../components/FollowButton';
+import OtherUserProfileScreen from './OtherUserProfileScreen';
 
 interface FeedItem {
   publicationId: number;
@@ -50,6 +52,7 @@ export default function FeedScreen() {
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
   const [searchLoading, setSearchLoading] = useState(false);
+  const [selectedUserProfile, setSelectedUserProfile] = useState<string | null>(null);
 
   const fetchFeed = useCallback(async () => {
     if (!userEmail) return;
@@ -95,35 +98,6 @@ export default function FeedScreen() {
       setSearchLoading(false);
     }
   }, [searchQuery]);
-
-  const handleFollow = useCallback(async (followedEmail: string) => {
-    if (!userEmail) return;
-    try {
-      const resp = await fetch(apiUrl('/api/users/follow'), {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ followerEmail: userEmail, followedEmail })
-      });
-      if (!resp.ok) throw new Error('Follow failed');
-      // Optionally refresh feed or show success
-    } catch (err) {
-      console.warn('Error following user', err);
-    }
-  }, [userEmail]);
-
-  const handleUnfollow = useCallback(async (followedEmail: string) => {
-    if (!userEmail) return;
-    try {
-      const resp = await fetch(apiUrl('/api/users/follow'), {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ followerEmail: userEmail, followedEmail })
-      });
-      if (!resp.ok) throw new Error('Unfollow failed');
-    } catch (err) {
-      console.warn('Error unfollowing user', err);
-    }
-  }, [userEmail]);
 
   const renderItem = ({ item }: { item: FeedItem }) => {
     return (
@@ -182,60 +156,76 @@ export default function FeedScreen() {
       {/* Search Modal */}
       <Modal visible={showSearchModal} animationType="slide" onRequestClose={() => setShowSearchModal(false)}>
         <SafeAreaView style={commonStyles.container} edges={['top', 'bottom']}>
-          <View style={commonStyles.header}>
-            <Text style={commonStyles.headerText}>Search Users</Text>
-            <TouchableOpacity onPress={() => setShowSearchModal(false)}>
-              <Text style={styles.closeButton}>✕</Text>
-            </TouchableOpacity>
-          </View>
-
-          <View style={styles.searchContainer}>
-            <TextInput
-              style={styles.searchInput}
-              placeholder="Search by name or username..."
-              placeholderTextColor={theme.colors.textSecondary}
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onSubmitEditing={handleSearch}
-              autoFocus
+          {selectedUserProfile ? (
+            <OtherUserProfileScreen
+              userEmail={selectedUserProfile}
+              currentUserEmail={userEmail || ''}
+              onGoBack={() => setSelectedUserProfile(null)}
             />
-            <GRButton label="Search" variant="primary" onPress={handleSearch} style={styles.searchSubmitButton} />
-          </View>
-
-          {searchLoading ? (
-            <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.xl }} />
           ) : (
-            <FlatList
-              data={searchResults}
-              keyExtractor={(item) => item.user_Email}
-              renderItem={({ item }) => (
-                <View style={styles.userCard}>
-                  <View style={styles.avatarPlaceholder}>
-                    <Text style={styles.avatarText}>{item.user_Username[0]?.toUpperCase() || '?'}</Text>
-                  </View>
-                  <View style={{ flex: 1, marginLeft: theme.spacing.m }}>
-                    <Text style={styles.userName}>{item.user_Names} {item.user_LastNames}</Text>
-                    <Text style={styles.userUsername}>@{item.user_Username}</Text>
-                  </View>
-                  <GRButton
-                    label="Follow"
-                    variant="secondary"
-                    onPress={() => handleFollow(item.user_Email)}
-                    style={styles.followButton}
-                  />
-                </View>
+            <>
+              <View style={commonStyles.header}>
+                <Text style={commonStyles.headerText}>Search Users</Text>
+                <TouchableOpacity onPress={() => setShowSearchModal(false)}>
+                  <Text style={styles.closeButton}>✕</Text>
+                </TouchableOpacity>
+              </View>
+
+              <View style={styles.searchContainer}>
+                <TextInput
+                  style={styles.searchInput}
+                  placeholder="Search by name or username..."
+                  placeholderTextColor={theme.colors.textSecondary}
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  onSubmitEditing={handleSearch}
+                  autoFocus
+                />
+                <GRButton label="Search" variant="primary" onPress={handleSearch} style={styles.searchSubmitButton} />
+              </View>
+
+              {searchLoading ? (
+                <ActivityIndicator size="large" color={theme.colors.primary} style={{ marginTop: theme.spacing.xl }} />
+              ) : (
+                <FlatList
+                  data={searchResults}
+                  keyExtractor={(item) => item.user_Email}
+                  renderItem={({ item }) => (
+                    <View style={styles.userCard}>
+                      <TouchableOpacity
+                        style={{ flex: 1, flexDirection: 'row', alignItems: 'center' }}
+                        onPress={() => setSelectedUserProfile(item.user_Email)}
+                      >
+                        <View style={styles.avatarPlaceholder}>
+                          <Text style={styles.avatarText}>{item.user_Username[0]?.toUpperCase() || '?'}</Text>
+                        </View>
+                        <View style={{ flex: 1, marginLeft: theme.spacing.m }}>
+                          <Text style={styles.userName}>{item.user_Names} {item.user_LastNames}</Text>
+                          <Text style={styles.userUsername}>@{item.user_Username}</Text>
+                        </View>
+                      </TouchableOpacity>
+                      {userEmail && (
+                        <FollowButton
+                          targetUserEmail={item.user_Email}
+                          currentUserEmail={userEmail}
+                          style={styles.followButton}
+                        />
+                      )}
+                    </View>
+                  )}
+                  contentContainerStyle={styles.searchListContent}
+                  ListEmptyComponent={
+                    searchQuery ? (
+                      <View style={styles.emptyContainer}>
+                        <Text style={styles.emptyIcon}>🔍</Text>
+                        <Text style={styles.emptyTitle}>No users found</Text>
+                        <Text style={styles.emptySub}>Try a different search term</Text>
+                      </View>
+                    ) : null
+                  }
+                />
               )}
-              contentContainerStyle={styles.searchListContent}
-              ListEmptyComponent={
-                searchQuery ? (
-                  <View style={styles.emptyContainer}>
-                    <Text style={styles.emptyIcon}>🔍</Text>
-                    <Text style={styles.emptyTitle}>No users found</Text>
-                    <Text style={styles.emptySub}>Try a different search term</Text>
-                  </View>
-                ) : null
-              }
-            />
+            </>
           )}
         </SafeAreaView>
       </Modal>

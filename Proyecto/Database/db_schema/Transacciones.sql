@@ -88,6 +88,7 @@ END;
 
 
 -- Seguir a un usuario (con validación transaccional)
+-- Crea registros en ambas direcciones: follower->followed y followed (para la relación inversa)
 DROP PROCEDURE IF EXISTS sp_user_follow;
 CREATE PROCEDURE sp_user_follow(
     IN p_follower_email VARCHAR(100),
@@ -103,32 +104,73 @@ BEGIN
     START TRANSACTION;
 
     -- Validar que ambos usuarios existan
-    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email = p_follower_email) THEN
+    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email COLLATE utf8mb4_unicode_ci = p_follower_email COLLATE utf8mb4_unicode_ci) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Follower user does not exist';
     END IF;
 
-    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email = p_followed_email) THEN
+    IF NOT EXISTS (SELECT 1 FROM UserGR WHERE user_Email COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci) THEN
         SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Followed user does not exist';
     END IF;
 
-    -- Insertar relación (trigger previene auto-seguimiento)
+    -- Validar que no se intente seguir a sí mismo
+    IF p_follower_email COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Cannot follow yourself';
+    END IF;
+
+    -- Insertar relación en Followed (follower -> followed)
     INSERT INTO Followed (user_EmailFollower, user_EmailFollowed)
     VALUES (p_follower_email, p_followed_email);
+
+    -- Incrementar contador de seguidos del follower
+    UPDATE UserGR 
+    SET user_FollowingCount = COALESCE(user_FollowingCount, 0) + 1
+    WHERE user_Email COLLATE utf8mb4_unicode_ci = p_follower_email COLLATE utf8mb4_unicode_ci;
+
+    -- Incrementar contador de seguidores del followed
+    UPDATE UserGR 
+    SET user_FollowersCount = COALESCE(user_FollowersCount, 0) + 1
+    WHERE user_Email COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci;
 
     COMMIT;
 END;
 
 
--- Dejar de seguir a un usuario
+-- Dejar de seguir a un usuario (con transacción)
 DROP PROCEDURE IF EXISTS sp_user_unfollow;
 CREATE PROCEDURE sp_user_unfollow(
     IN p_follower_email VARCHAR(100),
     IN p_followed_email VARCHAR(100)
 )
 BEGIN
+    DECLARE EXIT HANDLER FOR SQLEXCEPTION
+    BEGIN
+        ROLLBACK;
+        RESIGNAL;
+    END;
+
+    START TRANSACTION;
+
+    -- Validar que la relación exista
+    IF NOT EXISTS (SELECT 1 FROM Followed WHERE user_EmailFollower COLLATE utf8mb4_unicode_ci = p_follower_email COLLATE utf8mb4_unicode_ci AND user_EmailFollowed COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci) THEN
+        SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT = 'Follow relationship does not exist';
+    END IF;
+
+    -- Eliminar la relación en Followed
     DELETE FROM Followed
-    WHERE user_EmailFollower = p_follower_email
-      AND user_EmailFollowed = p_followed_email;
+    WHERE user_EmailFollower COLLATE utf8mb4_unicode_ci = p_follower_email COLLATE utf8mb4_unicode_ci
+      AND user_EmailFollowed COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci;
+
+    -- Decrementar contador de seguidos del follower
+    UPDATE UserGR 
+    SET user_FollowingCount = GREATEST(COALESCE(user_FollowingCount, 0) - 1, 0)
+    WHERE user_Email COLLATE utf8mb4_unicode_ci = p_follower_email COLLATE utf8mb4_unicode_ci;
+
+    -- Decrementar contador de seguidores del followed
+    UPDATE UserGR 
+    SET user_FollowersCount = GREATEST(COALESCE(user_FollowersCount, 0) - 1, 0)
+    WHERE user_Email COLLATE utf8mb4_unicode_ci = p_followed_email COLLATE utf8mb4_unicode_ci;
+
+    COMMIT;
 END;
 
 

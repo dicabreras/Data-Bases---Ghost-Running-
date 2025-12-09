@@ -17,15 +17,34 @@ import GhostsScreen from '../screens/GhostsScreen';
 import GhostDetailScreen from '../screens/GhostDetailScreen';
 import HistoryScreen from '../screens/HistoryScreen';
 import TrainingDetailScreen from '../screens/TrainingDetailScreen';
+import AdminDashboardScreen from '../screens/AdminDashboardScreen';
 
 const tab = createBottomTabNavigator();
 const stack = createNativeStackNavigator();
 
 function TabNavigator() {
 	const { user } = useAuth();
+	const isAdmin = user?.email === 'admin@runner.com';
 	const profilePhotoUrl = user?.profilePhoto
 		? apiUrl(`/images/${user.profilePhoto}`)
 		: apiUrl('/images/nouserimage.png');
+
+	if (isAdmin) {
+		return (
+			<tab.Navigator screenOptions={{ headerShown: false }}>
+				<tab.Screen
+					name="AdminDashboard"
+					component={AdminDashboardScreen}
+					options={{
+						tabBarIcon: ({ color }) => (
+							<Text style={{ fontSize: 24, color }}>📊</Text>
+						),
+						tabBarLabel: 'Admin'
+					}}
+				/>
+			</tab.Navigator>
+		);
+	}
 
 	return (
 		<tab.Navigator

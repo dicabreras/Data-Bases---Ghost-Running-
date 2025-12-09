@@ -14,7 +14,7 @@ import { Publication } from "../entity/Publication";
 import { Comment } from "../entity/Comment";
 
 // Cargar .env desde la raíz del repositorio
-const envPath = path.resolve(__dirname, '../../../../../.env');
+const envPath = path.resolve(__dirname, '../../../../.env');
 console.log('🔍 Buscando .env en:', envPath);
 const envConfig = dotenv.config({ path: envPath });
 if (envConfig.error) {

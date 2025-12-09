@@ -37,6 +37,12 @@ export class User {
     @Column({ name: "user_gender", length: 45, nullable: true })
     	gender?: string;
 
+    @Column({ name: "user_FollowersCount", type: "int", nullable: true, default: 0 })
+    	followersCount?: number;
+
+    @Column({ name: "user_FollowingCount", type: "int", nullable: true, default: 0 })
+    	followingCount?: number;
+
     @OneToMany(() => PhysicalState, physicalState => physicalState.user)
     	physicalStates!: PhysicalState[];
 
